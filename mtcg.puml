@@ -1,0 +1,163 @@
+@startuml
+'https//plantuml.com/class-diagram
+
+
+SpellCard <|--- Card
+MonsterCard <|--- Card
+User *-- Auth
+User *-- Stack
+User *-- Transaction
+User *-- Battle
+User *-- Trade
+Stack *-- Card
+Package *-- Card
+
+enum CardType{
+SPELL
+MONSTER
+}
+
+enum ElementType{
+FIRE
+WATER
+NORMAL
+}
+
+
+class Package {
+' Length is going to be fixed (5)
++ {static} double PACKAGE_PRICE=5
+- List<Card> cards
+' price is going to be fixed (5)
+- double price
+}
+
+abstract class Card {
+  - String id
+  - String name
+  - ElementType elementType 
+  - double damage 
+  - CardType cardType  
+  - boolean isLocked  
+ +getType()
+}
+
+class SpellCard {
+
+}
+
+class MonsterCard {
+    bool isGoblin()
+    bool isDragon()
+    bool isWizard()
+    bool isKnight()
+    bool isKraken()
+    bool isFireElve()
+}
+
+
+class Transaction {
++ {static} double START_CREDIT=20
+- double amount 
+- DateTime completionDatetime 
+- User recipient 
+}
+
+
+note "purchasePackage() is only successful if user has enough credit\ncreateTrade() needs to lock the card and ensure it isn't in the deck" as U1
+U1 .. User
+
+note "chooseDeck() needs to implement some contraints (4 cards, cards available etc.), returns original deck on failure" as S1
+S1 .. Stack
+
+note "This class will be completely replaced with the actual HTTP server" as A1
+A1 .. Application
+
+class Stack {
+- List<Card> cards
+' Length is going to be fixed (4)
+- List<Card> deck
++ void addCardsFromPackage(Package package)
++ List<Card> showAllCards()
++ List<Card> showCurrentDeck()
++ List<Card> chooseDeck(List<String> ids)
++ bool lockCard(Card card)
++ bool unlockCard(Card card)
++ bool removeCard(Card card)
++ bool addCard(Card card)
+}
+
+class Trade {
+- String id 
+- User initiator 
+- User acceptor 
+- Card initiatorCard 
+- Card acceptorCard 
+- List<CardType> desiredCardTypes 
+- double desiredMinimumDamage 
+- ElementType desiredElementType 
+- DateTime startDatetime 
+- DateTime completionDatetime 
+}
+
+
+class Auth {
+-String hash 
+-String token 
++boolean checkPassword(String password)
++String hashPassword(String password)
++String getToken()
+}
+
+class User {
+-String username
+-String bio
+-String image
+- int currentElo;
+
+-Auth auth
+- Stack stack
+- List<Transaction> transactions
+- List<Trade> trades
+- List<Battles> battles
+
+-double getCurrentCredit()
+-Transaction performTransaction(double amount)
+
++boolean updateProfile(String username, String bio, String image)
++void purchasePackage(Package package)
++Stack getStack()
+
++Trade createTrade(...)
++List<Trade> getOpenTrades()
++bool cardIsValidForTrade(Card card, Trade trade)
++Trade completeTrade(Trade trade, Card card, User acceptor)
++bool deleteTrade(String id)
+
+' 0 - draw, 1: card01 won, -1: card02 won
+- int handleBattle(Card card01, Card card02)
++ void completeBattle(User user01, User user02)
++ int getElo()
+
+}
+
+class Application {
+- List<User> registeredUsers
+- List<Packages> packages
++  {static} User registerUser(String username, String password)
++  {static} User loginAsUser(String username, String password)
++  {static} Package createPackage(JSON json)
++  {static} Package acquirePackage()
++  {static} Deck defineDeck(JSON json)
++  {static} Battle performBattle(JSON json)
+.... ()
+}
+
+
+class Battle {
+- User ser01
+- User user02
+- DateTime startDatetime
+- DateTime completionDatetime
+}
+@enduml
