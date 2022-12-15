@@ -155,7 +155,7 @@ class Application {
 
 
 class Battle {
-- User ser01
+- User user01
 - User user02
 - DateTime startDatetime
 - DateTime completionDatetime
