@@ -1,7 +1,9 @@
 package org.example.app;
 
 import org.example.app.controllers.CityController;
+import org.example.app.controllers.UserController;
 import org.example.app.services.CityService;
+import org.example.app.services.UserService;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
 import lombok.AccessLevel;
@@ -14,9 +16,12 @@ import org.example.server.ServerApp;
 public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
     private CityController cityController;
+    @Setter(AccessLevel.PRIVATE)
+    private UserController userController;
 
     public App() {
         setCityController(new CityController(new CityService()));
+        setUserController(new UserController(new UserService()));
     }
 
     public Response handleRequest(Request request) {
@@ -26,7 +31,10 @@ public class App implements ServerApp {
             case GET: {
                 if (request.getPathname().equals("/cities")) {
                     return this.cityController.getCities();
+                }else if (request.getPathname().equals("/users")) {
+                    return this.userController.getUsers();
                 }
+
             }
         }
 
