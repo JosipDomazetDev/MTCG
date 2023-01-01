@@ -1,6 +1,7 @@
 package org.example.app;
 
 import org.example.app.controllers.CityController;
+import org.example.app.controllers.SessionController;
 import org.example.app.controllers.UserController;
 import org.example.app.services.CityService;
 import org.example.app.services.UserService;
@@ -19,9 +20,15 @@ public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
     private UserController userController;
 
+    @Setter(AccessLevel.PRIVATE)
+    private SessionController sessionController;
+
     public App() {
         setCityController(new CityController(new CityService()));
-        setUserController(new UserController(new UserService()));
+
+        UserService userService = new UserService();
+        setUserController(new UserController(userService));
+        setSessionController(new SessionController(userService));
     }
 
     public Response handleRequest(Request request) {
@@ -39,6 +46,9 @@ public class App implements ServerApp {
             case POST: {
                 if (request.getPathname().equals("/users")) {
                     return this.userController.createUser(request);
+                    //return this.userController.createUser(request.getBody());
+                } else if (request.getPathname().equals("/sessions")) {
+                    return this.sessionController.login(request);
                     //return this.userController.createUser(request.getBody());
                 }
 

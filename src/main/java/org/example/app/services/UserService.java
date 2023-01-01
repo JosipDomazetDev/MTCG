@@ -7,6 +7,7 @@ import org.example.app.models.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class UserService {
     @Setter(AccessLevel.PRIVATE)
@@ -39,5 +40,15 @@ public class UserService {
 
     public void removeUser(String id) {
         users.removeIf(User -> Objects.equals(id, User.getId()));
+    }
+
+    public boolean login(User proposedUser) {
+        User foundUser = users.stream().filter(user -> proposedUser.getUsername().equals(user.getUsername())).findFirst().orElse(null);
+
+        if (foundUser == null){
+            return false;
+        }
+
+        return proposedUser.getPassword().equals(foundUser.getPassword());
     }
 }
