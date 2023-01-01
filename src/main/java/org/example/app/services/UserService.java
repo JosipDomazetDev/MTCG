@@ -3,7 +3,6 @@ package org.example.app.services;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.example.app.models.User;
-import org.example.app.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +29,12 @@ public class UserService {
         return users;
     }
 
-    public void addUser(User User) {
-        users.add(User);
+    public boolean addUser(User user) {
+        if (users.stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
+            return false;
+        }
+
+        return users.add(user);
     }
 
     public void removeUser(String id) {

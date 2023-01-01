@@ -31,8 +31,15 @@ public class App implements ServerApp {
             case GET: {
                 if (request.getPathname().equals("/cities")) {
                     return this.cityController.getCities();
-                }else if (request.getPathname().equals("/users")) {
+                } else if (request.getPathname().equals("/users")) {
                     return this.userController.getUsers();
+                }
+
+            }
+            case POST: {
+                if (request.getPathname().equals("/users")) {
+                    return this.userController.createUser(request);
+                    //return this.userController.createUser(request.getBody());
                 }
 
             }

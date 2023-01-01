@@ -8,7 +8,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) {
         App app = new App();
-        Server server = new Server(app, 80);
+        Server server = new Server(app, 10001);
         try {
             server.start();
         } catch (IOException e) {

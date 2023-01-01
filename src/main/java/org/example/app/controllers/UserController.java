@@ -8,6 +8,7 @@ import org.example.app.models.User;
 import org.example.app.services.UserService;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
+import org.example.server.Request;
 import org.example.server.Response;
 
 import java.util.List;
@@ -47,7 +48,32 @@ public class UserController extends Controller {
     }
 
     // POST /cities
-    public void createUser() {
+    public Response createUser(Request request) {
+        try {
+            User user = getObjectMapper().readValue(request.getBody(), User.class);
+            boolean isUserAdded = getUserService().addUser(user);
+
+            if (!isUserAdded) {
+                return new Response(
+                        HttpStatus.BAD_REQUEST,
+                        ContentType.JSON,
+                        "{ \"data\": null, \"error\": \"User already created.\" }"
+                );
+            }
+
+            return new Response(
+                    HttpStatus.OK,
+                    ContentType.JSON,
+                    "{ \"data\": " + getObjectMapper().writeValueAsString(user) + ", \"error\": null }"
+            );
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return new Response(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    ContentType.JSON,
+                    "{ \"error\": \"Internal Server Error\", \"data\": null }"
+            );
+        }
 
     }
 
