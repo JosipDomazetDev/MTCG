@@ -22,24 +22,15 @@ public class UserController extends Controller {
         setUserService(userService);
     }
 
-    public Response getUsers() {
-        try {
-            List<User> UserData = getUserService().getUsers();
-            String UserDataJSON = getObjectMapper().writeValueAsString(UserData);
+    public Response getUsers() throws JsonProcessingException {
+        List<User> UserData = getUserService().getUsers();
+        String UserDataJSON = getObjectMapper().writeValueAsString(UserData);
 
-            return new Response(
-                    HttpStatus.OK,
-                    ContentType.JSON,
-                    "{ \"data\": " + UserDataJSON + ", \"error\": null }"
-            );
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return new Response(
-                    HttpStatus.BAD_REQUEST,
-                    ContentType.JSON,
-                    "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
-            );
-        }
+        return new Response(
+                HttpStatus.OK,
+                ContentType.JSON,
+                "{ \"data\": " + UserDataJSON + ", \"error\": null }"
+        );
     }
 
     // GET /cities/:id
@@ -48,33 +39,23 @@ public class UserController extends Controller {
     }
 
     // POST /cities
-    public Response createUser(Request request) {
-        try {
-            User user = getObjectMapper().readValue(request.getBody(), User.class);
-            boolean isUserAdded = getUserService().addUser(user);
+    public Response createUser(Request request) throws JsonProcessingException {
+        User user = getObjectMapper().readValue(request.getBody(), User.class);
+        boolean isUserAdded = getUserService().addUser(user);
 
-            if (!isUserAdded) {
-                return new Response(
-                        HttpStatus.BAD_REQUEST,
-                        ContentType.JSON,
-                        "{ \"data\": null, \"error\": \"User already created.\" }"
-                );
-            }
-
-            return new Response(
-                    HttpStatus.OK,
-                    ContentType.JSON,
-                    "{ \"data\": " + getObjectMapper().writeValueAsString(user) + ", \"error\": null }"
-            );
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        if (!isUserAdded) {
             return new Response(
                     HttpStatus.BAD_REQUEST,
                     ContentType.JSON,
-                    "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
+                    "{ \"data\": null, \"error\": \"User already created.\" }"
             );
         }
 
+        return new Response(
+                HttpStatus.OK,
+                ContentType.JSON,
+                "{ \"data\": " + getObjectMapper().writeValueAsString(user) + ", \"error\": null }"
+        );
     }
 
     // DELETE /cities/:id

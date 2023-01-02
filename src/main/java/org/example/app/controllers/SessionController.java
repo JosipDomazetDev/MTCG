@@ -20,32 +20,23 @@ public class SessionController extends Controller {
         setUserService(userService);
     }
 
-    public Response login(Request request) {
-        try {
-            User proposedUser = getObjectMapper().readValue(request.getBody(), User.class);
-            boolean loginSuccessful = getUserService().login(proposedUser);
+    public Response login(Request request) throws JsonProcessingException {
+        User proposedUser = getObjectMapper().readValue(request.getBody(), User.class);
+        boolean loginSuccessful = getUserService().login(proposedUser);
 
-            if (!loginSuccessful) {
-                return new Response(
-                        HttpStatus.UNAUTHORIZED,
-                        ContentType.JSON,
-                        "{ \"data\": null, \"error\": \"Login failed.\" }"
-                );
-            }
-
+        if (!loginSuccessful) {
             return new Response(
-                    HttpStatus.OK,
+                    HttpStatus.UNAUTHORIZED,
                     ContentType.JSON,
-                    "{ \"data\": {\"token\": " + getObjectMapper().writeValueAsString(proposedUser.getToken()) + "}, \"error\": null }"
-            );
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return new Response(
-                    HttpStatus.BAD_REQUEST,
-                    ContentType.JSON,
-                    "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
+                    "{ \"data\": null, \"error\": \"Login failed.\" }"
             );
         }
+
+        return new Response(
+                HttpStatus.OK,
+                ContentType.JSON,
+                "{ \"data\": {\"token\": " + getObjectMapper().writeValueAsString(proposedUser.getToken()) + "}, \"error\": null }"
+        );
     }
 
     public User getAuthenticatedUser(String token) {

@@ -18,7 +18,7 @@ import org.example.server.Response;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PackageController extends Controller{
+public class PackageController extends Controller {
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
     private CardService cardService;
@@ -26,12 +26,11 @@ public class PackageController extends Controller{
     public PackageController(CardService cardService) {
         setCardService(cardService);
     }
-    public Response createPackage(Request request, User authenticatedUser) {
 
-        try {
-            ArrayList<Card> cards = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
-            });
-            cardService.createPackageWithCards(cards, authenticatedUser);
+    public Response createPackage(Request request, User authenticatedUser) throws JsonProcessingException {
+        ArrayList<Card> cards = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
+        });
+        cardService.createPackageWithCards(cards, authenticatedUser);
 
 
         return new Response(
@@ -39,13 +38,10 @@ public class PackageController extends Controller{
                 ContentType.JSON,
                 "{ \"data\": \"Cards created!\", \"error\": null }"
         );
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return new Response(
-                    HttpStatus.BAD_REQUEST,
-                    ContentType.JSON,
-                    "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
-            );
-        }
+    }
+
+    public Response buyPackage(Request request, User authenticatedUser) {
+
+        return null;
     }
 }

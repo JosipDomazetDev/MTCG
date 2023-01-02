@@ -1,5 +1,6 @@
 package org.example.app;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
 import org.example.app.services.CardService;
@@ -44,36 +45,49 @@ public class App implements ServerApp {
         User authenticatedUser = sessionController.getAuthenticatedUser(request.getToken());
         boolean isAuthenticated = authenticatedUser != null;
 
-        switch (request.getMethod()) {
-            case GET: {
-                if (request.getPathname().equals("/cities")) {
-                    return this.cityController.getCities();
-                } else if (request.getPathname().equals("/users")) {
-                    return this.userController.getUsers();
+        try {
+            switch (request.getMethod()) {
+                case GET: {
+                    if (request.getPathname().equals("/cities")) {
+                        return this.cityController.getCities();
+                    } else if (request.getPathname().equals("/users")) {
+                        return this.userController.getUsers();
+                    }
+
                 }
+                case POST: {
+                    if (request.getPathname().equals("/users")) {
+                        return this.userController.createUser(request);
+                    } else if (request.getPathname().equals("/sessions")) {
+                        return this.sessionController.login(request);
+                    }
 
-            }
-            case POST: {
-                if (request.getPathname().equals("/users")) {
-                    return this.userController.createUser(request);
-                } else if (request.getPathname().equals("/sessions")) {
-                    return this.sessionController.login(request);
-                }
+                    // ============================ Authenticated Paths ============================
 
-                // ============================ Authenticated Paths ============================
-
-                if (!isAuthenticated) {
-                    return this.errorController.sendUnauthorized(request);
-                }
-
-                if (request.getPathname().equals("/packages")) {
-                    if (!authenticatedUser.isAdmin()){
+                    if (!isAuthenticated) {
                         return this.errorController.sendUnauthorized(request);
                     }
 
-                    return this.packageController.createPackage(request, authenticatedUser);
+                    if (request.getPathname().equals("/packages")) {
+                        if (!authenticatedUser.isAdmin()) {
+                            return this.errorController.sendUnauthorized(request);
+                        }
+
+                        return this.packageController.createPackage(request, authenticatedUser);
+                    }
+
+                    if (request.getPathname().equals("/transactions/packages")) {
+                        return this.packageController.buyPackage(request, authenticatedUser);
+                    }
                 }
             }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return new Response(
+                    HttpStatus.BAD_REQUEST,
+                    ContentType.JSON,
+                    "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
+            );
         }
 
         return new Response(HttpStatus.NOT_FOUND, ContentType.JSON, "{ \"error\": \"Not Found\", \"data\": null }");
