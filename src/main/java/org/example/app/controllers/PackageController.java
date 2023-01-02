@@ -9,14 +9,14 @@ import org.example.app.models.Card;
 import org.example.app.models.Package;
 import org.example.app.models.User;
 import org.example.app.services.CardService;
-import org.example.app.services.UserService;
+import org.example.app.services.exceptions.NoMoneyException;
+import org.example.app.services.exceptions.NotAvailableException;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
 import org.example.server.Request;
 import org.example.server.Response;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class PackageController extends Controller {
     @Setter(AccessLevel.PRIVATE)
@@ -32,16 +32,34 @@ public class PackageController extends Controller {
         });
         cardService.createPackageWithCards(cards, authenticatedUser);
 
-
         return new Response(
                 HttpStatus.OK,
                 ContentType.JSON,
-                "{ \"data\": \"Cards created!\", \"error\": null }"
+                "{ \"data\": \"Package created!\", \"error\": null }"
         );
     }
 
-    public Response buyPackage(Request request, User authenticatedUser) {
+    public Response buyPackage(User authenticatedUser) throws JsonProcessingException {
+        try {
+            Package pack = cardService.buyPackage(authenticatedUser);
 
-        return null;
+            return new Response(
+                    HttpStatus.OK,
+                    ContentType.JSON,
+                    getObjectMapper().writeValueAsString(pack.getCards())
+            );
+        } catch (NotAvailableException e) {
+            return new Response(
+                    HttpStatus.NOT_FOUND,
+                    ContentType.JSON,
+                    "{ \"error\": \"No card package available for buying!\"}"
+            );
+        } catch (NoMoneyException e) {
+            return new Response(
+                    HttpStatus.FORBIDDEN,
+                    ContentType.JSON,
+                    "{ \"error\": \"Not enough money for buying a card package!\"}"
+            );
+        }
     }
 }

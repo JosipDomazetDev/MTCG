@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.app.services.exceptions.NoMoneyException;
 
 import java.beans.ConstructorProperties;
 import java.util.UUID;
@@ -64,4 +65,13 @@ public class User {
     }
 
 
+    public void buyPackage(Package packageToBeBought) throws NoMoneyException {
+        packageToBeBought.setUser(this);
+
+        if(packageToBeBought.getPrice() > coins){
+            throw new NoMoneyException();
+        }
+
+        setCoins(getCoins() - packageToBeBought.getPrice());
+    }
 }

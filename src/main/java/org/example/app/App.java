@@ -77,7 +77,7 @@ public class App implements ServerApp {
                     }
 
                     if (request.getPathname().equals("/transactions/packages")) {
-                        return this.packageController.buyPackage(request, authenticatedUser);
+                        return this.packageController.buyPackage(authenticatedUser);
                     }
                 }
             }

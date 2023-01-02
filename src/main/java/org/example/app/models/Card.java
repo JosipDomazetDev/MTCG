@@ -1,6 +1,7 @@
 package org.example.app.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,9 +17,12 @@ public class Card {
     private String name;
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private double damage;
-    private Package pack;
 
+    @JsonIgnore
+    private Package pack;
+    @JsonIgnore
     private ElementType elementType;
+    @JsonIgnore
     private CardType cardType;
 
     @ConstructorProperties({"id", "name", "damage"})
