@@ -34,16 +34,22 @@ public class User {
     private String image;
 
 
-    @ConstructorProperties({"username","password"})
+    private boolean isAdmin = false;
+
+    @ConstructorProperties({"username", "password"})
     public User(String username, String password) {
         this.id = UUID.randomUUID().toString();
         this.username = username.toLowerCase();
         this.password = password;
-        this.token = this.username+"-mtcgToken";
+        this.token = this.username + "-mtcgToken";
         this.coins = 20;
         this.name = null;
         this.bio = null;
         this.image = null;
+
+        if (username.equals("admin")) {
+            isAdmin = true;
+        }
     }
 
     public User(String id, String username, String token, int coins, String name, String bio, String image) {

@@ -7,7 +7,6 @@ import org.example.app.models.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class UserService {
     @Setter(AccessLevel.PRIVATE)
@@ -50,5 +49,9 @@ public class UserService {
         }
 
         return proposedUser.getPassword().equals(foundUser.getPassword());
+    }
+
+    public User getAuthenticatedUser(String token) {
+        return users.stream().filter(user -> Objects.equals(user.getToken(), token)).findFirst().orElse(null);
     }
 }

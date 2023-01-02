@@ -1,8 +1,7 @@
 package org.example.app;
 
-import org.example.app.controllers.CityController;
-import org.example.app.controllers.SessionController;
-import org.example.app.controllers.UserController;
+import org.example.app.controllers.*;
+import org.example.app.models.User;
 import org.example.app.services.CityService;
 import org.example.app.services.UserService;
 import org.example.http.ContentType;
@@ -23,16 +22,26 @@ public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
     private SessionController sessionController;
 
+    @Setter(AccessLevel.PRIVATE)
+    private PackageController packageController;
+
+    @Setter(AccessLevel.PRIVATE)
+    private ErrorController errorController;
+
     public App() {
         setCityController(new CityController(new CityService()));
 
         UserService userService = new UserService();
         setUserController(new UserController(userService));
         setSessionController(new SessionController(userService));
+
+        setPackageController(new PackageController());
+        setErrorController(new ErrorController());
     }
 
     public Response handleRequest(Request request) {
-
+        User authenticatedUser = sessionController.getAuthenticatedUser(request.getToken());
+        boolean isAuthenticated = authenticatedUser != null;
 
         switch (request.getMethod()) {
             case GET: {
@@ -46,12 +55,19 @@ public class App implements ServerApp {
             case POST: {
                 if (request.getPathname().equals("/users")) {
                     return this.userController.createUser(request);
-                    //return this.userController.createUser(request.getBody());
                 } else if (request.getPathname().equals("/sessions")) {
                     return this.sessionController.login(request);
-                    //return this.userController.createUser(request.getBody());
                 }
 
+                // ============================ Authenticated Paths ============================
+
+                if (!isAuthenticated) {
+                    return this.errorController.sendUnauthorized(request);
+                }
+
+                if (request.getPathname().equals("/packages")) {
+                    return this.packageController.createPackage(request, authenticatedUser);
+                }
             }
         }
 

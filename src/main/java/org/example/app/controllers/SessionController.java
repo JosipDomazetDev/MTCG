@@ -47,4 +47,10 @@ public class SessionController extends Controller {
             );
         }
     }
+
+    public User getAuthenticatedUser(String token) {
+        if (token == null) return null;
+
+        return userService.getAuthenticatedUser(token);
+    }
 }
