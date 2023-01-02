@@ -38,9 +38,9 @@ public class CityController extends Controller {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return new Response(
-                HttpStatus.INTERNAL_SERVER_ERROR,
+                HttpStatus.BAD_REQUEST,
                 ContentType.JSON,
-                "{ \"error\": \"Internal Server Error\", \"data\": null }"
+                "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
             );
         }
     }

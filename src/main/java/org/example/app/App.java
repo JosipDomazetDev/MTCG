@@ -2,6 +2,7 @@ package org.example.app;
 
 import org.example.app.controllers.*;
 import org.example.app.models.User;
+import org.example.app.services.CardService;
 import org.example.app.services.CityService;
 import org.example.app.services.UserService;
 import org.example.http.ContentType;
@@ -35,7 +36,7 @@ public class App implements ServerApp {
         setUserController(new UserController(userService));
         setSessionController(new SessionController(userService));
 
-        setPackageController(new PackageController());
+        setPackageController(new PackageController(new CardService()));
         setErrorController(new ErrorController());
     }
 
@@ -66,6 +67,10 @@ public class App implements ServerApp {
                 }
 
                 if (request.getPathname().equals("/packages")) {
+                    if (!authenticatedUser.isAdmin()){
+                        return this.errorController.sendUnauthorized(request);
+                    }
+
                     return this.packageController.createPackage(request, authenticatedUser);
                 }
             }
