@@ -34,6 +34,9 @@ public class App implements ServerApp {
     private CardController cardController;
 
     @Setter(AccessLevel.PRIVATE)
+    private StatController statController;
+
+    @Setter(AccessLevel.PRIVATE)
     private ErrorController errorController;
 
     public App() {
@@ -46,6 +49,8 @@ public class App implements ServerApp {
         CardService cardService = new CardService();
         setPackageController(new PackageController(cardService));
         setCardController(new CardController(cardService));
+
+        setStatController(new StatController(userService));
 
         setErrorController(new ErrorController());
     }
@@ -74,8 +79,8 @@ public class App implements ServerApp {
                     } else if (request.getPathname().equals("/decks")) {
                         boolean plainMode = request.getParams().contains("format=plain");
                         return this.cardController.getCardsFromDeck(authenticatedUser, plainMode);
-                    } else if (request.getPathname().equals("/decks?format=plain")) {
-                        return this.cardController.getCardsFromDeck(authenticatedUser, true);
+                    } else if (request.getPathname().equals("/stats")) {
+                        return this.statController.getStats(authenticatedUser);
                     }
                 }
                 case POST: {

@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.example.app.controllers.Controller;
+import org.example.app.models.Stat;
 import org.example.app.models.User;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -78,4 +78,7 @@ public class UserService {
     }
 
 
+    public Stat getStats(User authenticatedUser) {
+        return authenticatedUser.getStat();
+    }
 }

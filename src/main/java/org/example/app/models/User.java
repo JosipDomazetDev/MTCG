@@ -39,6 +39,9 @@ public class User {
     @JsonIgnore
     private Deck deck = new Deck(this);
 
+    @JsonIgnore
+    private Stat stat = new Stat(this);
+
 
     @ConstructorProperties({"username", "password"})
     public User(String username, String password) {
