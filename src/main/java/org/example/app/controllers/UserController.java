@@ -1,6 +1,7 @@
 package org.example.app.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +12,7 @@ import org.example.http.HttpStatus;
 import org.example.server.Request;
 import org.example.server.Response;
 
-import java.util.List;
+import java.util.Objects;
 
 public class UserController extends Controller {
     @Setter(AccessLevel.PRIVATE)
@@ -22,16 +23,66 @@ public class UserController extends Controller {
         setUserService(userService);
     }
 
-    public Response getUsers() throws JsonProcessingException {
-        List<User> UserData = getUserService().getUsers();
-        String UserDataJSON = getObjectMapper().writeValueAsString(UserData);
+    public Response putUser(Request request, String username, User authenticatedUser) throws JsonProcessingException {
+        if (checkGivenUsernameIsntAuthenticatedUsername(username, authenticatedUser)) {
+            return new Response(
+                    HttpStatus.UNAUTHORIZED,
+                    ContentType.JSON,
+                    "\"User not found!\""
+            );
+        }
+
+        JsonNode rootNode = getObjectMapper().readTree(request.getBody());
+        User user = getUserService().putUser(username, rootNode);
+
+        if (user == null) {
+            return new Response(
+                    HttpStatus.UNAUTHORIZED,
+                    ContentType.JSON,
+                    "\"User not found!\""
+            );
+        }
+
+        String userJson = getObjectMapper().writeValueAsString(user);
 
         return new Response(
                 HttpStatus.OK,
                 ContentType.JSON,
-                "{ \"data\": " + UserDataJSON + ", \"error\": null }"
+                userJson
         );
     }
+
+    public Response getUser(String username, User authenticatedUser) throws JsonProcessingException {
+        if (checkGivenUsernameIsntAuthenticatedUsername(username, authenticatedUser)) {
+            return new Response(
+                    HttpStatus.UNAUTHORIZED,
+                    ContentType.JSON,
+                    "\"User not found!\""
+            );
+        }
+
+        User user = getUserService().getUser(username);
+
+        if (user == null) {
+            return new Response(
+                    HttpStatus.UNAUTHORIZED,
+                    ContentType.JSON,
+                    "\"User not found!\""
+            );
+        }
+
+        String userJson = getObjectMapper().writeValueAsString(user);
+
+        return new Response(
+                HttpStatus.OK,
+                ContentType.JSON,
+                userJson
+        );
+    }
+    private static boolean checkGivenUsernameIsntAuthenticatedUsername(String username, User authenticatedUser) {
+        return !Objects.equals(authenticatedUser.getUsername(), username);
+    }
+
 
     // GET /cities/:id
     public void getUserById(int id) {

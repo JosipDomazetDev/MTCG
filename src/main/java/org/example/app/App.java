@@ -14,6 +14,9 @@ import org.example.server.Request;
 import org.example.server.Response;
 import org.example.server.ServerApp;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
@@ -56,17 +59,21 @@ public class App implements ServerApp {
                 case GET: {
                     if (request.getPathname().equals("/cities")) {
                         return this.cityController.getCities();
-                    } else if (request.getPathname().equals("/users")) {
-                        return this.userController.getUsers();
                     }
 
                     if (!isAuthenticated) {
                         return this.errorController.sendUnauthorized(request);
                     }
 
-                    if (request.getPathname().equals("/cards")) {
+                    String matchesUserPath = matchesUserPath(request);
+
+                    if (matchesUserPath != null) {
+                        return this.userController.getUser(matchesUserPath, authenticatedUser);
+                    } else if (request.getPathname().equals("/cards")) {
                         return this.cardController.getCards(authenticatedUser);
                     } else if (request.getPathname().equals("/decks")) {
+                        return this.cardController.getCardsFromDeck(authenticatedUser);
+                    } else if (request.getPathname().equals("/decks?format=plain")) {
                         return this.cardController.getCardsFromDeck(authenticatedUser);
                     }
                 }
@@ -96,7 +103,11 @@ public class App implements ServerApp {
                     }
                 }
                 case PUT: {
-                    if (request.getPathname().equals("/decks")) {
+                    String matchesUserPath = matchesUserPath(request);
+
+                    if (matchesUserPath != null) {
+                        return this.userController.putUser(request, matchesUserPath, authenticatedUser);
+                    } else if (request.getPathname().equals("/decks")) {
                         return this.cardController.putCardsIntoDeck(request, authenticatedUser);
                     }
                 }
@@ -111,5 +122,17 @@ public class App implements ServerApp {
         }
 
         return new Response(HttpStatus.NOT_FOUND, ContentType.JSON, "{ \"error\": \"Not Found\", \"data\": null }");
+    }
+
+    private static String matchesUserPath(Request request) {
+        String pathRegex = "^/users/([\\w\\-\\.~:\\/\\?#\\[\\]@!$&'\\(\\)\\*\\+,;=]+)(?:\\?.*)?$";
+        Pattern pathPattern = Pattern.compile(pathRegex);
+        Matcher pathMatcher = pathPattern.matcher(request.getPathname());
+
+        if (pathMatcher.matches()) {
+            return pathMatcher.group(1);
+        }
+
+        return null;
     }
 }
