@@ -66,12 +66,11 @@ public class User {
 
 
     public void buyPackage(Package packageToBeBought) throws NoMoneyException {
-        packageToBeBought.setUser(this);
-
         if(packageToBeBought.getPrice() > coins){
             throw new NoMoneyException();
         }
 
+        packageToBeBought.setUser(this);
         setCoins(getCoins() - packageToBeBought.getPrice());
     }
 }
