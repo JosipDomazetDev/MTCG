@@ -37,7 +37,7 @@ public class User {
     private boolean isAdmin = false;
 
     @JsonIgnore
-    private Stack stack = new Stack(this);
+    private Deck deck = new Deck(this);
 
 
     @ConstructorProperties({"username", "password"})

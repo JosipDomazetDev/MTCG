@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 @Getter
 @Setter
-public class Stack {
+public class Deck {
     private User user;
     private List<Card> cards = new ArrayList<>();
 
-    public Stack(User user) {
+    public Deck(User user) {
         this.user = user;
     }
 }

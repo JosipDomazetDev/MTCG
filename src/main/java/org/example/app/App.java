@@ -96,7 +96,9 @@ public class App implements ServerApp {
                     }
                 }
                 case PUT: {
-
+                    if (request.getPathname().equals("/decks")) {
+                        return this.cardController.putCardsIntoDeck(request, authenticatedUser);
+                    }
                 }
             }
         } catch (JsonProcessingException e) {
