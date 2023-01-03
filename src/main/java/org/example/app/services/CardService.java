@@ -10,6 +10,8 @@ import org.example.app.services.exceptions.NotAvailableException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class CardService {
     @Setter(AccessLevel.PRIVATE)
@@ -35,5 +37,14 @@ public class CardService {
         authenticatedUser.buyPackage(packageToBeBought);
 
         return packageToBeBought;
+    }
+
+    public List<Card> getCards(User authenticatedUser) {
+        List<Package> packagesForUser = packages.stream()
+                .filter(aPackage ->
+                        aPackage.getUser() != null && Objects.equals(aPackage.getUser().getId(), authenticatedUser.getId())).toList();
+
+        return packagesForUser.stream()
+                .flatMap(aPackage -> aPackage.getCards().stream()).toList();
     }
 }

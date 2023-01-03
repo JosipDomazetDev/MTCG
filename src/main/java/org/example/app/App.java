@@ -28,6 +28,9 @@ public class App implements ServerApp {
     private PackageController packageController;
 
     @Setter(AccessLevel.PRIVATE)
+    private CardController cardController;
+
+    @Setter(AccessLevel.PRIVATE)
     private ErrorController errorController;
 
     public App() {
@@ -37,7 +40,10 @@ public class App implements ServerApp {
         setUserController(new UserController(userService));
         setSessionController(new SessionController(userService));
 
-        setPackageController(new PackageController(new CardService()));
+        CardService cardService = new CardService();
+        setPackageController(new PackageController(cardService));
+        setCardController(new CardController(cardService));
+
         setErrorController(new ErrorController());
     }
 
@@ -54,6 +60,13 @@ public class App implements ServerApp {
                         return this.userController.getUsers();
                     }
 
+                    if (!isAuthenticated) {
+                        return this.errorController.sendUnauthorized(request);
+                    }
+
+                    if (request.getPathname().equals("/cards")) {
+                        return this.cardController.getCards(authenticatedUser);
+                    }
                 }
                 case POST: {
                     if (request.getPathname().equals("/users")) {

@@ -10,7 +10,7 @@ public class ErrorController  extends Controller{
         return new Response(
                 HttpStatus.UNAUTHORIZED,
                 ContentType.JSON,
-                "{ \"error\": \"Correct token required\", \"data\": null }"
+                "{ \"error\": \"Accesss token is missing or invalid!\", \"data\": null }"
         );
     }
 }
