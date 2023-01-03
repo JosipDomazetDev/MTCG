@@ -81,6 +81,8 @@ public class App implements ServerApp {
                         return this.cardController.getCardsFromDeck(authenticatedUser, plainMode);
                     } else if (request.getPathname().equals("/stats")) {
                         return this.statController.getStats(authenticatedUser);
+                    } else if (request.getPathname().equals("/scores")) {
+                        return this.statController.getScores();
                     }
                 }
                 case POST: {

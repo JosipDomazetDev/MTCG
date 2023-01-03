@@ -8,6 +8,7 @@ import org.example.app.models.Stat;
 import org.example.app.models.User;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,8 +50,6 @@ public class UserService {
     }
 
 
-
-
     public boolean addUser(User user) {
         if (users.stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
             return false;
@@ -80,5 +79,9 @@ public class UserService {
 
     public Stat getStats(User authenticatedUser) {
         return authenticatedUser.getStat();
+    }
+
+    public List<Stat> getScoreboard() {
+        return users.stream().map(User::getStat).sorted(Comparator.comparingInt(value -> -value.getElo())).toList();
     }
 }

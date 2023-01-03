@@ -11,6 +11,8 @@ import org.example.http.ContentType;
 import org.example.http.HttpStatus;
 import org.example.server.Response;
 
+import java.util.List;
+
 public class StatController extends Controller {
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
@@ -27,6 +29,16 @@ public class StatController extends Controller {
                 HttpStatus.OK,
                 ContentType.JSON,
                 getObjectMapper().writeValueAsString(stat)
+        );
+    }
+
+    public Response getScores() throws JsonProcessingException {
+        List<Stat> stats = userService.getScoreboard();
+
+        return new Response(
+                HttpStatus.OK,
+                ContentType.JSON,
+                getObjectMapper().writeValueAsString(stats)
         );
     }
 }
