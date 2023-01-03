@@ -34,8 +34,11 @@ public class User {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String image;
 
-
     private boolean isAdmin = false;
+
+    @JsonIgnore
+    private Stack stack = new Stack(this);
+
 
     @ConstructorProperties({"username", "password"})
     public User(String username, String password) {

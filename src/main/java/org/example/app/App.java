@@ -66,6 +66,8 @@ public class App implements ServerApp {
 
                     if (request.getPathname().equals("/cards")) {
                         return this.cardController.getCards(authenticatedUser);
+                    } else if (request.getPathname().equals("/decks")) {
+                        return this.cardController.getCardsFromDeck(authenticatedUser);
                     }
                 }
                 case POST: {
@@ -92,6 +94,9 @@ public class App implements ServerApp {
                     if (request.getPathname().equals("/transactions/packages")) {
                         return this.packageController.buyPackage(authenticatedUser);
                     }
+                }
+                case PUT: {
+
                 }
             }
         } catch (JsonProcessingException e) {

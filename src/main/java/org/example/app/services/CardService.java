@@ -47,4 +47,8 @@ public class CardService {
         return packagesForUser.stream()
                 .flatMap(aPackage -> aPackage.getCards().stream()).toList();
     }
+
+    public List<Card> getCardsFromDeck(User authenticatedUser) {
+        return authenticatedUser.getStack().getCards();
+    }
 }
