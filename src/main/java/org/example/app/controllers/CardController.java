@@ -44,7 +44,7 @@ public class CardController extends Controller {
         );
     }
 
-    public Response getCardsFromDeck(User authenticatedUser) throws JsonProcessingException {
+    public Response getCardsFromDeck(User authenticatedUser, boolean plainMode) throws JsonProcessingException {
         List<Card> cards = cardService.getCardsFromDeck(authenticatedUser);
 
         if (cards.isEmpty()) {
@@ -55,12 +55,21 @@ public class CardController extends Controller {
             );
         }
 
+        List<?> responseList;
+
+        if (plainMode) {
+            responseList = cards.stream().map(Card::getName).toList();
+        } else {
+            responseList = cards;
+        }
+
         return new Response(
                 HttpStatus.OK,
                 ContentType.JSON,
-                getObjectMapper().writeValueAsString(cards)
+                getObjectMapper().writeValueAsString(responseList)
         );
     }
+
 
     public Response putCardsIntoDeck(Request request, User authenticatedUser) throws JsonProcessingException {
         List<String> cardIds = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
@@ -88,4 +97,6 @@ public class CardController extends Controller {
                 "\"Deck updated!\""
         );
     }
+
+
 }

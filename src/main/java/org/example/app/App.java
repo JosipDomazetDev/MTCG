@@ -72,9 +72,10 @@ public class App implements ServerApp {
                     } else if (request.getPathname().equals("/cards")) {
                         return this.cardController.getCards(authenticatedUser);
                     } else if (request.getPathname().equals("/decks")) {
-                        return this.cardController.getCardsFromDeck(authenticatedUser);
+                        boolean plainMode = request.getParams().contains("format=plain");
+                        return this.cardController.getCardsFromDeck(authenticatedUser, plainMode);
                     } else if (request.getPathname().equals("/decks?format=plain")) {
-                        return this.cardController.getCardsFromDeck(authenticatedUser);
+                        return this.cardController.getCardsFromDeck(authenticatedUser, true);
                     }
                 }
                 case POST: {
