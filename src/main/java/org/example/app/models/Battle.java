@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.example.app.models.BattleOutcome.*;
@@ -89,26 +90,24 @@ public class Battle {
 
         // The element type does not affect pure monster fights.
         if (card1.isSpell() || card2.isSpell()) {
-            if (card1.isSpell() || card2.isSpell()) {
-                if (card1.isWater() && card2.isFire()) {
-                    card1Modifier = 2;
-                    card2Modifier = 0.5;
-                } else if (card1.isFire() && card2.isNormal()) {
-                    card1Modifier = 2;
-                    card2Modifier = 0.5;
-                } else if (card1.isNormal() && card2.isWater()) {
-                    card1Modifier = 2;
-                    card2Modifier = 0.5;
-                } else if (card2.isWater() && card1.isFire()) {
-                    card2Modifier = 2;
-                    card1Modifier = 0.5;
-                } else if (card2.isFire() && card1.isNormal()) {
-                    card2Modifier = 2;
-                    card1Modifier = 0.5;
-                } else if (card2.isNormal() && card1.isWater()) {
-                    card2Modifier = 2;
-                    card1Modifier = 0.5;
-                }
+            if (card1.isWater() && card2.isFire()) {
+                card1Modifier = 2;
+                card2Modifier = 0.5;
+            } else if (card1.isFire() && card2.isNormal()) {
+                card1Modifier = 2;
+                card2Modifier = 0.5;
+            } else if (card1.isNormal() && card2.isWater()) {
+                card1Modifier = 2;
+                card2Modifier = 0.5;
+            } else if (card2.isWater() && card1.isFire()) {
+                card2Modifier = 2;
+                card1Modifier = 0.5;
+            } else if (card2.isFire() && card1.isNormal()) {
+                card2Modifier = 2;
+                card1Modifier = 0.5;
+            } else if (card2.isNormal() && card1.isWater()) {
+                card2Modifier = 2;
+                card1Modifier = 0.5;
             }
         }
 
@@ -181,20 +180,24 @@ public class Battle {
             // Draw a random card
             int index1 = rand.nextInt(deck1.size());
             int index2 = rand.nextInt(deck2.size());
+            System.out.println(deck1.size() + "vs." + deck2.size());
 
             Card card1 = deck1.get(index1);
             Card card2 = deck2.get(index2);
 
             Card winnerCard = battle(card1, card2);
 
-            if (winnerCard == card1) {
-                // If player 1 wins round
-                deck2.remove(card2);
-                deck1.add(card2);
-            } else if (winnerCard == card2) {
-                // If player 2 wins round
-                deck1.remove(card1);
-                deck2.add(card1);
+            // null means draw
+            if (winnerCard != null) {
+                if (Objects.equals(winnerCard.getId(), card1.getId())) {
+                    // If player 1 wins round
+                    deck2.remove(card2);
+                    deck1.add(card2);
+                } else if (Objects.equals(winnerCard.getId(), card2.getId())) {
+                    // If player 2 wins round
+                    deck1.remove(card1);
+                    deck2.add(card1);
+                }
             }
 
             i++;

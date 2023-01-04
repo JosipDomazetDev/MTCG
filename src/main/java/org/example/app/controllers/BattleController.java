@@ -19,7 +19,6 @@ public class BattleController extends Controller{
         setBattleService(battleService);
     }
 
-
     public Response createOrStartBattle(User authenticatedUser) {
         String battleLog = battleService.createOrStartBattle(authenticatedUser);
         System.out.println(battleLog);
