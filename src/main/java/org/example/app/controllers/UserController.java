@@ -84,11 +84,6 @@ public class UserController extends Controller {
     }
 
 
-    // GET /cities/:id
-    public void getUserById(int id) {
-
-    }
-
     // POST /cities
     public Response createUser(Request request) throws JsonProcessingException {
         User user = getObjectMapper().readValue(request.getBody(), User.class);
@@ -109,8 +104,4 @@ public class UserController extends Controller {
         );
     }
 
-    // DELETE /cities/:id
-    public void deleteUser(int id) {
-
-    }
 }

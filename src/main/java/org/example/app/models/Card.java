@@ -35,6 +35,14 @@ public class Card {
         } else {
             this.cardType = CardType.MONSTER;
         }
+
+        if (name.contains("Water")) {
+            this.elementType = ElementType.WATER;
+        } else if (name.contains("Fire")) {
+            this.elementType = ElementType.FIRE;
+        } else {
+            this.elementType = ElementType.NORMAL;
+        }
     }
 
     @Override

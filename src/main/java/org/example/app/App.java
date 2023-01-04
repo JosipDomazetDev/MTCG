@@ -3,10 +3,7 @@ package org.example.app;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
-import org.example.app.services.BattleService;
-import org.example.app.services.CardService;
-import org.example.app.services.CityService;
-import org.example.app.services.UserService;
+import org.example.app.services.*;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
 import lombok.AccessLevel;
@@ -41,6 +38,9 @@ public class App implements ServerApp {
     private BattleController battleController;
 
     @Setter(AccessLevel.PRIVATE)
+    private TradingController tradingController;
+
+    @Setter(AccessLevel.PRIVATE)
     private ErrorController errorController;
 
     public App() {
@@ -57,6 +57,8 @@ public class App implements ServerApp {
         setStatController(new StatController(userService));
 
         setBattleController(new BattleController(new BattleService()));
+
+        setTradingController(new TradingController(new TradingService(), cardService));
 
         setErrorController(new ErrorController());
     }
@@ -80,21 +82,30 @@ public class App implements ServerApp {
 
                     if (matchesUserPath != null) {
                         return this.userController.getUser(matchesUserPath, authenticatedUser);
-                    } else if (request.getPathname().equals("/cards")) {
+                    }
+
+                    if (request.getPathname().equals("/cards")) {
                         return this.cardController.getCards(authenticatedUser);
-                    } else if (request.getPathname().equals("/decks")) {
+                    }
+                    if (request.getPathname().equals("/decks")) {
                         boolean plainMode = request.getParams().contains("format=plain");
                         return this.cardController.getCardsFromDeck(authenticatedUser, plainMode);
-                    } else if (request.getPathname().equals("/stats")) {
+                    }
+                    if (request.getPathname().equals("/stats")) {
                         return this.statController.getStats(authenticatedUser);
-                    } else if (request.getPathname().equals("/scores")) {
+                    }
+                    if (request.getPathname().equals("/scores")) {
                         return this.statController.getScores();
+                    }
+                    if (request.getPathname().equals("/tradings")) {
+                        return this.tradingController.getTrades(authenticatedUser);
                     }
                 }
                 case POST: {
                     if (request.getPathname().equals("/users")) {
                         return this.userController.createUser(request);
-                    } else if (request.getPathname().equals("/sessions")) {
+                    }
+                    if (request.getPathname().equals("/sessions")) {
                         return this.sessionController.login(request);
                     }
 
@@ -103,7 +114,6 @@ public class App implements ServerApp {
                     if (!isAuthenticated) {
                         return this.errorController.sendUnauthorized(request);
                     }
-
                     if (request.getPathname().equals("/packages")) {
                         if (!authenticatedUser.isAdmin()) {
                             return this.errorController.sendUnauthorized(request);
@@ -111,13 +121,14 @@ public class App implements ServerApp {
 
                         return this.packageController.createPackage(request, authenticatedUser);
                     }
-
                     if (request.getPathname().equals("/transactions/packages")) {
                         return this.packageController.buyPackage(authenticatedUser);
                     }
-
                     if (request.getPathname().equals("/battles")) {
                         return this.battleController.createOrStartBattle(authenticatedUser);
+                    }
+                    if (request.getPathname().equals("/tradings")) {
+                        return this.tradingController.postTrades(request, authenticatedUser);
                     }
                 }
                 case PUT: {
@@ -125,18 +136,17 @@ public class App implements ServerApp {
 
                     if (matchesUserPath != null) {
                         return this.userController.putUser(request, matchesUserPath, authenticatedUser);
-                    } else if (request.getPathname().equals("/decks")) {
+                    }
+                    if (request.getPathname().equals("/decks")) {
                         return this.cardController.putCardsIntoDeck(request, authenticatedUser);
                     }
                 }
+                case DELETE:
+                    break;
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            return new Response(
-                    HttpStatus.BAD_REQUEST,
-                    ContentType.JSON,
-                    "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }"
-            );
+            return new Response(HttpStatus.BAD_REQUEST, ContentType.JSON, "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }");
         }
 
         return new Response(HttpStatus.NOT_FOUND, ContentType.JSON, "{ \"error\": \"Not Found\", \"data\": null }");

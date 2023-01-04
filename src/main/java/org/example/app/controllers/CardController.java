@@ -58,7 +58,7 @@ public class CardController extends Controller {
         List<?> responseList;
 
         if (plainMode) {
-            responseList = cards.stream().map(Card::getName).toList();
+            responseList = cards.stream().map(Card::toString).toList();
         } else {
             responseList = cards;
         }
