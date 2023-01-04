@@ -11,6 +11,7 @@ import org.example.app.services.exceptions.NotAvailableException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public class TradingService {
     @Setter(AccessLevel.PRIVATE)
@@ -20,9 +21,18 @@ public class TradingService {
         setTrades(new ArrayList<>());
     }
 
-    public List<Trade> getTrades(User authenticatedUser) {
+    public List<Trade> getTrades(User authenticatedUser, boolean belongsToMe) {
+        Stream<Trade> activeStream = trades.stream()
+                .filter(t -> !t.isCompleted());
+
+        if (belongsToMe){
+            return activeStream
+                    .filter(trade -> Objects.equals(trade.getUser().getId(), authenticatedUser.getId()))
+                    .toList();
+        }
+
         // get Trades that aren't from the user himself
-        return trades.stream()
+        return activeStream
                 .filter(trade -> !Objects.equals(trade.getUser().getId(), authenticatedUser.getId()))
                 .toList();
     }

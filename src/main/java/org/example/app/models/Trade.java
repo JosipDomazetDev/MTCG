@@ -26,6 +26,8 @@ public class Trade {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private float minimumDamage;
 
+    private boolean isCompleted;
+
     @JsonIgnore
     private Card card;
     @JsonIgnore

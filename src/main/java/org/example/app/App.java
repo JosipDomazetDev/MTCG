@@ -98,7 +98,8 @@ public class App implements ServerApp {
                         return this.statController.getScores();
                     }
                     if (request.getPathname().equals("/tradings")) {
-                        return this.tradingController.getTrades(authenticatedUser);
+                        boolean belongsToMe = request.getParams().contains("belongs=me");
+                        return this.tradingController.getTrades(authenticatedUser, belongsToMe);
                     }
                 }
                 case POST: {

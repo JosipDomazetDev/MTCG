@@ -290,6 +290,8 @@ pause
 echo check trading deals
 curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer kienboec-mtcgToken"
 echo.
+curl -i -X GET http://localhost:10001/tradings?belongs=me --header "Authorization: Bearer kienboec-mtcgToken"
+echo.
 curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer altenhof-mtcgToken"
 echo.
 

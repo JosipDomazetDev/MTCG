@@ -16,9 +16,7 @@ import org.example.http.HttpStatus;
 import org.example.server.Request;
 import org.example.server.Response;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class TradingController extends Controller {
     @Setter(AccessLevel.PRIVATE)
@@ -35,8 +33,8 @@ public class TradingController extends Controller {
         setCardService(cardService);
     }
 
-    public Response getTrades(User authenticatedUser) throws JsonProcessingException {
-        List<Trade> trades = tradingService.getTrades(authenticatedUser);
+    public Response getTrades(User authenticatedUser, boolean belongsToMe) throws JsonProcessingException {
+        List<Trade> trades = tradingService.getTrades(authenticatedUser, belongsToMe);
 
         if (trades.isEmpty()) {
             return new Response(
