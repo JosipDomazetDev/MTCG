@@ -3,6 +3,7 @@ package org.example.app;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
+import org.example.app.services.BattleService;
 import org.example.app.services.CardService;
 import org.example.app.services.CityService;
 import org.example.app.services.UserService;
@@ -37,6 +38,9 @@ public class App implements ServerApp {
     private StatController statController;
 
     @Setter(AccessLevel.PRIVATE)
+    private BattleController battleController;
+
+    @Setter(AccessLevel.PRIVATE)
     private ErrorController errorController;
 
     public App() {
@@ -51,6 +55,8 @@ public class App implements ServerApp {
         setCardController(new CardController(cardService));
 
         setStatController(new StatController(userService));
+
+        setBattleController(new BattleController(new BattleService()));
 
         setErrorController(new ErrorController());
     }
@@ -108,6 +114,10 @@ public class App implements ServerApp {
 
                     if (request.getPathname().equals("/transactions/packages")) {
                         return this.packageController.buyPackage(authenticatedUser);
+                    }
+
+                    if (request.getPathname().equals("/battles")) {
+                        return this.battleController.createOrStartBattle(authenticatedUser);
                     }
                 }
                 case PUT: {

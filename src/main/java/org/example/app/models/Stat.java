@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 public class Stat {
-    private int elo;
+    private int elo = 100;
     private int wins;
     private int draws;
 
@@ -30,5 +30,21 @@ public class Stat {
     @JsonProperty("losses")
     private int getDefeats() {
         return total - wins - draws;
+    }
+
+    public void won() {
+        total++;
+        wins++;
+        elo += 3;
+    }
+
+    public void lost() {
+        total++;
+        elo -= 5;
+    }
+
+    public void draw() {
+        total++;
+        draws++;
     }
 }

@@ -79,4 +79,5 @@ public class User {
         packageToBeBought.setUser(this);
         setCoins(getCoins() - packageToBeBought.getPrice());
     }
+
 }

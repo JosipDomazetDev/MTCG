@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.beans.ConstructorProperties;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -36,5 +35,67 @@ public class Card {
         } else {
             this.cardType = CardType.MONSTER;
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s [%s]", name, damage);
+    }
+
+    public static final String DRAGON = "Dragon";
+    public static final String GOBLINS = "Goblin";
+    public static final String ORK = "Ork";
+    public static final String KNIGHT = "Knight";
+    public static final String WIZARD = "Wizzard";
+    public static final String WATER_SPELL = "WaterSpell";
+    public static final String KRAKEN = "Kraken";
+    public static final String FIRE_ELF = "FireElf";
+
+    public boolean isDragon() {
+        return name.contains(DRAGON);
+    }
+
+    public boolean isGoblin() {
+        return name.contains(GOBLINS);
+    }
+
+    public boolean isWizard() {
+        return name.contains(WIZARD);
+    }
+
+    public boolean isOrk() {
+        return name.contains(ORK);
+    }
+
+    public boolean isKnight() {
+        return name.contains(KNIGHT);
+    }
+
+    public boolean isWaterSpell() {
+        return name.contains(WATER_SPELL);
+    }
+
+    public boolean isKraken() {
+        return name.contains(KRAKEN);
+    }
+
+    public boolean isFireElf() {
+        return name.contains(FIRE_ELF);
+    }
+
+    public boolean isSpell() {
+        return cardType == CardType.SPELL;
+    }
+
+    public boolean isWater() {
+        return elementType == ElementType.WATER;
+    }
+
+    public boolean isFire() {
+        return elementType == ElementType.FIRE;
+    }
+
+    public boolean isNormal() {
+        return elementType == ElementType.NORMAL;
     }
 }
