@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  postgres:
+    container_name: mtcg
+    image: postgres:15
+    environment:
+      POSTGRES_USER: josip
+      POSTGRES_PASSWORD: josip
+    ports:
+      - "5000:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
