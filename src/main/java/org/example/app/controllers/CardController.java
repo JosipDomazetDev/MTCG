@@ -17,6 +17,7 @@ import org.example.server.Request;
 import org.example.server.Response;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CardController extends Controller {
     @Setter(AccessLevel.PRIVATE)
@@ -105,4 +106,25 @@ public class CardController extends Controller {
     }
 
 
+    public Response getCard(User authenticatedUser, String cardId) throws JsonProcessingException {
+        Card foundCard = getCardService().getCardsFromUser(authenticatedUser).
+                stream()
+                .filter(card -> Objects.equals(card.getId(), cardId))
+                .findFirst()
+                .orElse(null);
+
+        if (foundCard == null) {
+            return new Response(
+                    HttpStatus.FORBIDDEN,
+                    ContentType.JSON,
+                    "{ \"error\": \"This card does not belong to this user.\"}"
+            );
+        }
+
+        return new Response(
+                HttpStatus.OK,
+                ContentType.JSON,
+                getObjectMapper().writeValueAsString(foundCard)
+        );
+    }
 }

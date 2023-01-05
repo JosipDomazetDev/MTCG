@@ -324,12 +324,44 @@ echo.
 pause
 
 echo try to trade
+
+
+echo 21a) Updated: Check Card Ownership
+
+
+REM they should own these cards
+curl -i -X GET http://localhost:10001/cards/951e886a-0fbf-425d-8df5-af2ee4830d85 --header "Authorization: Bearer altenhof-mtcgToken"
+echo.
+curl -i -X GET http://localhost:10001/cards/1cb6ab86-bdb2-47e5-b6e4-68c5ab389334 --header "Authorization: Bearer kienboec-mtcgToken"
+echo.
+
+REM they should not own these cards
+curl -i -X GET http://localhost:10001/cards/1cb6ab86-bdb2-47e5-b6e4-68c5ab389334 --header "Authorization: Bearer altenhof-mtcgToken"
+echo.
+curl -i -X GET http://localhost:10001/cards/951e886a-0fbf-425d-8df5-af2ee4830d85 --header "Authorization: Bearer kienboec-mtcgToken"
+echo.
+
+
 echo.
 curl -i -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Bearer altenhof-mtcgToken" -d "\"951e886a-0fbf-425d-8df5-af2ee4830d85\""
 echo.
 curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer kienboec-mtcgToken"
 echo.
 curl -i -X GET http://localhost:10001/tradings --header "Authorization: Bearer altenhof-mtcgToken"
+echo.
+
+echo 21b) Updated: Check Card Ownership after Trade
+
+REM they should not own these cards
+curl -i -X GET http://localhost:10001/cards/951e886a-0fbf-425d-8df5-af2ee4830d85 --header "Authorization: Bearer altenhof-mtcgToken"
+echo.
+curl -i -X GET http://localhost:10001/cards/1cb6ab86-bdb2-47e5-b6e4-68c5ab389334 --header "Authorization: Bearer kienboec-mtcgToken"
+echo.
+
+REM they should own these cards
+curl -i -X GET http://localhost:10001/cards/1cb6ab86-bdb2-47e5-b6e4-68c5ab389334 --header "Authorization: Bearer altenhof-mtcgToken"
+echo.
+curl -i -X GET http://localhost:10001/cards/951e886a-0fbf-425d-8df5-af2ee4830d85 --header "Authorization: Bearer kienboec-mtcgToken"
 echo.
 
 pause
