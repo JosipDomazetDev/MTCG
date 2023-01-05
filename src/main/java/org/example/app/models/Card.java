@@ -23,6 +23,8 @@ public class Card {
     private ElementType elementType;
     @JsonIgnore
     private CardType cardType;
+    @JsonIgnore
+    private User owner;
 
     @ConstructorProperties({"id", "name", "damage"})
     public Card(String id, String name, double damage) {
@@ -59,65 +61,70 @@ public class Card {
     public static final String KRAKEN = "Kraken";
     public static final String FIRE_ELF = "FireElf";
 
+    @JsonIgnore
     public boolean isDragon() {
         return name.contains(DRAGON);
     }
+
+    @JsonIgnore
 
     public boolean isGoblin() {
         return name.contains(GOBLINS);
     }
 
+    @JsonIgnore
     public boolean isWizard() {
         return name.contains(WIZARD);
     }
 
+    @JsonIgnore
     public boolean isOrk() {
         return name.contains(ORK);
     }
 
+    @JsonIgnore
     public boolean isKnight() {
         return name.contains(KNIGHT);
     }
 
+    @JsonIgnore
     public boolean isWaterSpell() {
         return name.contains(WATER_SPELL);
     }
 
+    @JsonIgnore
     public boolean isKraken() {
         return name.contains(KRAKEN);
     }
 
+    @JsonIgnore
     public boolean isFireElf() {
         return name.contains(FIRE_ELF);
     }
 
+    @JsonIgnore
     public boolean isSpell() {
         return cardType == CardType.SPELL;
     }
 
+    @JsonIgnore
     public boolean isWater() {
         return elementType == ElementType.WATER;
     }
 
+    @JsonIgnore
     public boolean isFire() {
         return elementType == ElementType.FIRE;
     }
 
+    @JsonIgnore
     public boolean isNormal() {
         return elementType == ElementType.NORMAL;
     }
 
-    public void switchWith(Card offeredCard) {
-        Package originalPackage = getPack();
-
-        // Move original card to new package
-        offeredCard.getPack().getCards().add(this);
-        getPack().getCards().remove(this);
-        setPack(offeredCard.getPack());
-
-        // Move offered card to this package
-        offeredCard.getPack().getCards().remove(offeredCard);
-        originalPackage.getCards().add(offeredCard);
-        offeredCard.setPack(originalPackage);
+    public void swapWith(Card offeredCard) {
+        User temp = getOwner();
+        setOwner(offeredCard.getOwner());
+        offeredCard.setOwner(temp);
     }
 }

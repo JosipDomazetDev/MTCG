@@ -78,6 +78,11 @@ public class User {
 
         packageToBeBought.setUser(this);
         setCoins(getCoins() - packageToBeBought.getPrice());
+
+        for (Card card : packageToBeBought.getCards()) {
+            // Set the new owner
+            card.setOwner(this);
+        }
     }
 
 }

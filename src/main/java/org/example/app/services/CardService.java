@@ -42,12 +42,10 @@ public class CardService {
     }
 
     public List<Card> getCardsFromUser(User authenticatedUser) {
-        List<Package> packagesForUser = packages.stream()
-                .filter(aPackage ->
-                        aPackage.getUser() != null && Objects.equals(aPackage.getUser().getId(), authenticatedUser.getId())).toList();
-
-        return packagesForUser.stream()
-                .flatMap(aPackage -> aPackage.getCards().stream()).toList();
+        return packages.stream()
+                .flatMap(aPackage -> aPackage.getCards().stream())
+                .filter(card ->
+                        card.getOwner() != null && Objects.equals(card.getOwner().getId(), authenticatedUser.getId())).toList();
     }
 
     public List<Card> getCardsFromDeck(User authenticatedUser) {

@@ -28,13 +28,13 @@ public class TradingService {
 
         if (belongsToMe) {
             return activeStream
-                    .filter(trade -> Objects.equals(trade.getUser().getId(), authenticatedUser.getId()))
+                    .filter(trade -> Objects.equals(trade.getUser1().getId(), authenticatedUser.getId()))
                     .toList();
         }
 
         // get Trades that aren't from the user himself
         return activeStream
-                .filter(trade -> !Objects.equals(trade.getUser().getId(), authenticatedUser.getId()))
+                .filter(trade -> !Objects.equals(trade.getUser1().getId(), authenticatedUser.getId()))
                 .toList();
     }
 
@@ -59,7 +59,7 @@ public class TradingService {
             throw new NotAvailableException();
         }
 
-        if (!Objects.equals(trade.getCard().getPack().getUser().getId(), authenticatedUser.getId())) {
+        if (!Objects.equals(trade.getCard().getOwner().getId(), authenticatedUser.getId())) {
             //The deal contains a card that is not owned by the user.
             throw new ConflictException();
         }
@@ -93,12 +93,12 @@ public class TradingService {
             throw new ConflictException();
         }
 
-        if (Objects.equals(authenticatedUser.getId(), trade.getCard().getPack().getUser().getId())) {
+        if (Objects.equals(authenticatedUser.getId(), trade.getCard().getOwner().getId())) {
             // The user tries to trade with self
             throw new ConflictException();
         }
 
-        trade.getCard().switchWith(offeredCard);
+        trade.getCard().swapWith(offeredCard);
         trade.complete(authenticatedUser);
     }
 

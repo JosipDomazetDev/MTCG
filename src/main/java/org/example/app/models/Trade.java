@@ -29,7 +29,7 @@ public class Trade {
     @JsonIgnore
     private Card card;
     @JsonIgnore
-    private User user;
+    private User user1;
     @JsonIgnore
     private User user2;
 
@@ -59,7 +59,7 @@ public class Trade {
             return Objects.equals(card1.getId(), cardToTrade) && !cardIdsFromDeck.contains(cardToTrade);
         }).findFirst().orElse(null);
 
-        this.user = authenticatedUser;
+        this.user1 = authenticatedUser;
     }
 
     public void complete(User authenticatedUser) {
