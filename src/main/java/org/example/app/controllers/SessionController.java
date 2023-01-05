@@ -28,14 +28,14 @@ public class SessionController extends Controller {
             return new Response(
                     HttpStatus.UNAUTHORIZED,
                     ContentType.JSON,
-                    "{ \"data\": null, \"error\": \"Login failed.\" }"
+                    "{\"error\": \"Login failed.\"}"
             );
         }
 
         return new Response(
                 HttpStatus.OK,
                 ContentType.JSON,
-                "{ \"data\": {\"token\": " + getObjectMapper().writeValueAsString(proposedUser.getToken()) + "}, \"error\": null }"
+                getObjectMapper().writeValueAsString(proposedUser.getToken())
         );
     }
 

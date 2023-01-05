@@ -93,14 +93,14 @@ public class UserController extends Controller {
             return new Response(
                     HttpStatus.BAD_REQUEST,
                     ContentType.JSON,
-                    "{ \"data\": null, \"error\": \"User already created.\" }"
+                    "{\"error\": \"User already created.\" }"
             );
         }
 
         return new Response(
                 HttpStatus.OK,
                 ContentType.JSON,
-                "{ \"data\": " + getObjectMapper().writeValueAsString(user) + ", \"error\": null }"
+                getObjectMapper().writeValueAsString(user)
         );
     }
 

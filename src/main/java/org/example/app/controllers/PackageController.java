@@ -35,7 +35,7 @@ public class PackageController extends Controller {
         return new Response(
                 HttpStatus.OK,
                 ContentType.JSON,
-                "{ \"data\": \"Package created!\", \"error\": null }"
+                "\"Package created!\""
         );
     }
 

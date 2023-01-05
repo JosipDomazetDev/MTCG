@@ -87,13 +87,13 @@ public class CardController extends Controller {
             return new Response(
                     HttpStatus.BAD_REQUEST,
                     ContentType.JSON,
-                    "\"Provided deck did not include the right amount of cards.\""
+                    "{ \"error\": \"Provided deck did not include the right amount of cards.\"}"
             );
         } catch (NotAvailableException e) {
             return new Response(
                     HttpStatus.FORBIDDEN,
                     ContentType.JSON,
-                    "\"At least one of the provided cards does not belong to the user or is not available.\""
+                    "{ \"error\": \"At least one of the provided cards does not belong to the user or is not available.\"}"
             );
         }
 
