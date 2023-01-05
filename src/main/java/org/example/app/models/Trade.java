@@ -26,15 +26,15 @@ public class Trade {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private float minimumDamage;
 
-    private boolean isCompleted;
-
     @JsonIgnore
     private Card card;
     @JsonIgnore
     private User user;
+    @JsonIgnore
+    private User user2;
 
     @JsonProperty("type")
-    private String getType() {
+    private String getJsonType() {
         return type == CardType.SPELL ? "Spell" : "Monster";
     }
 
@@ -51,7 +51,7 @@ public class Trade {
         this.minimumDamage = minimumDamage;
     }
 
-    public void finalizeTrade(List<Card> cardsFromUser, List<Card> cardsFromDeck, User authenticatedUser) {
+    public void initTrade(List<Card> cardsFromUser, List<Card> cardsFromDeck, User authenticatedUser) {
         List<String> cardIdsFromDeck = cardsFromDeck.stream().map(Card::getId).toList();
 
         card = cardsFromUser.stream().filter(card1 -> {
@@ -60,5 +60,13 @@ public class Trade {
         }).findFirst().orElse(null);
 
         this.user = authenticatedUser;
+    }
+
+    public void complete(User authenticatedUser) {
+        user2 = authenticatedUser;
+    }
+
+    public boolean isCompleted() {
+        return user2 != null;
     }
 }

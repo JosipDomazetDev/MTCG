@@ -78,4 +78,59 @@ public class TradingController extends Controller {
             );
         }
     }
+
+    public Response deleteTrade(User authenticatedUser, String tradeId) throws JsonProcessingException {
+        try {
+            tradingService.deleteTrade(tradeId, authenticatedUser);
+
+            return new Response(
+                    HttpStatus.OK,
+                    ContentType.JSON,
+                    getObjectMapper().writeValueAsString("Deleted.")
+            );
+        } catch (NotAvailableException e) {
+            return new Response(
+                    HttpStatus.NOT_FOUND,
+                    ContentType.JSON,
+                    "{ \"error\": \"The provided deal ID was not found.\"}"
+            );
+        } catch (ConflictException e) {
+            return new Response(
+                    HttpStatus.FORBIDDEN,
+                    ContentType.JSON,
+                    "{ \"error\": \"The deal contains a card that is not owned by the user.\"}"
+            );
+        }
+    }
+
+    public Response performTrade(Request request, User authenticatedUser, String tradeId) throws JsonProcessingException {
+        try {
+            String cardId = getObjectMapper().readValue(request.getBody(), String.class);
+            List<Card> cardsFromUser = cardService.getCardsFromUser(authenticatedUser);
+            List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
+
+            tradingService.performTrade(tradeId, cardId, cardsFromUser, cardsFromDeck, authenticatedUser);
+
+            return new Response(
+                    HttpStatus.OK,
+                    ContentType.JSON,
+                    getObjectMapper().writeValueAsString("Success")
+            );
+        } catch (NotAvailableException e) {
+            return new Response(
+                    HttpStatus.CONFLICT,
+                    ContentType.JSON,
+                    "{ \"error\": \"The provided deal ID was not found!\"}"
+            );
+        } catch (ConflictException e) {
+            return new Response(
+                    HttpStatus.FORBIDDEN,
+                    ContentType.JSON,
+                    "{ \"error\": \"The offered card is not owned by the user, " +
+                            "or the requirements are not met (Type, MinimumDamage), " +
+                            "or the offered card is locked in the deck, " +
+                            "or the user tries to trade with self!\"}"
+            );
+        }
+    }
 }

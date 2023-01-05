@@ -25,7 +25,7 @@ public class TradingService {
         Stream<Trade> activeStream = trades.stream()
                 .filter(t -> !t.isCompleted());
 
-        if (belongsToMe){
+        if (belongsToMe) {
             return activeStream
                     .filter(trade -> Objects.equals(trade.getUser().getId(), authenticatedUser.getId()))
                     .toList();
@@ -42,12 +42,71 @@ public class TradingService {
             throw new ConflictException();
         }
 
-        trade.finalizeTrade(cardsFromUser, cardsFromDeck, authenticatedUser);
+        trade.initTrade(cardsFromUser, cardsFromDeck, authenticatedUser);
 
         if (trade.getCard() == null) {
             throw new NotAvailableException();
         }
 
         trades.add(trade);
+    }
+
+    public void deleteTrade(String tradeId, User authenticatedUser) throws NotAvailableException, ConflictException {
+        Trade trade = getTradeById(tradeId);
+
+        if (trade == null) {
+            throw new NotAvailableException();
+        }
+
+        if (!Objects.equals(trade.getCard().getPack().getUser().getId(), authenticatedUser.getId())) {
+            //The deal contains a card that is not owned by the user.
+            throw new ConflictException();
+        }
+
+        trades.remove(trade);
+    }
+
+    public void performTrade(String tradeId, String cardId, List<Card> cardsFromUser, List<Card> cardsFromDeck, User authenticatedUser) throws NotAvailableException, ConflictException {
+        Trade trade = getTradeById(tradeId);
+
+        if (trade == null) {
+            //The provided deal ID was not found.
+            throw new NotAvailableException();
+        }
+
+        Card offeredCard = cardsFromUser.stream().filter(card -> Objects.equals(card.getId(), cardId)).findFirst().orElse(null);
+
+        if (offeredCard == null) {
+            // The offered card is not owned by the user
+            throw new ConflictException();
+        }
+
+        if (offeredCard.getDamage() < trade.getCard().getDamage() || trade.getType() != offeredCard.getCardType()) {
+            // The requirements are not met (Type, MinimumDamage)
+            throw new ConflictException();
+        }
+
+
+        if (cardsFromDeck.stream().anyMatch(card -> Objects.equals(card.getId(), offeredCard.getId()))) {
+            // The offered card is locked in the deck
+            throw new ConflictException();
+        }
+
+        if (Objects.equals(authenticatedUser.getId(), trade.getCard().getPack().getUser().getId())) {
+            // The user tries to trade with self
+            throw new ConflictException();
+        }
+
+        trade.getCard().switchWith(offeredCard);
+        trade.complete(authenticatedUser);
+    }
+
+    private Trade getTradeById(String tradeId) {
+        return trades.stream()
+                .filter(t -> Objects.equals(t.getId(), tradeId)).findFirst().orElse(null);
+    }
+
+    public List<Trade> getAllTrades() {
+        return trades;
     }
 }

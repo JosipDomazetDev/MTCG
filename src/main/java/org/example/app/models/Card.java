@@ -106,4 +106,18 @@ public class Card {
     public boolean isNormal() {
         return elementType == ElementType.NORMAL;
     }
+
+    public void switchWith(Card offeredCard) {
+        Package originalPackage = getPack();
+
+        // Move original card to new package
+        offeredCard.getPack().getCards().add(this);
+        getPack().getCards().remove(this);
+        setPack(offeredCard.getPack());
+
+        // Move offered card to this package
+        offeredCard.getPack().getCards().remove(offeredCard);
+        originalPackage.getCards().add(offeredCard);
+        offeredCard.setPack(originalPackage);
+    }
 }

@@ -51,14 +51,16 @@ public class App implements ServerApp {
         setSessionController(new SessionController(userService));
 
         CardService cardService = new CardService();
+        TradingService tradingService = new TradingService();
+
         setPackageController(new PackageController(cardService));
-        setCardController(new CardController(cardService));
+        setCardController(new CardController(cardService, tradingService));
 
         setStatController(new StatController(userService));
 
         setBattleController(new BattleController(new BattleService()));
 
-        setTradingController(new TradingController(new TradingService(), cardService));
+        setTradingController(new TradingController(tradingService, cardService));
 
         setErrorController(new ErrorController());
     }
@@ -78,7 +80,7 @@ public class App implements ServerApp {
                         return this.errorController.sendUnauthorized(request);
                     }
 
-                    String matchesUserPath = matchesUserPath(request);
+                    String matchesUserPath = matchesUserPath("users", request);
 
                     if (matchesUserPath != null) {
                         return this.userController.getUser(matchesUserPath, authenticatedUser);
@@ -133,7 +135,7 @@ public class App implements ServerApp {
                     }
                 }
                 case PUT: {
-                    String matchesUserPath = matchesUserPath(request);
+                    String matchesUserPath = matchesUserPath("users", request);
 
                     if (matchesUserPath != null) {
                         return this.userController.putUser(request, matchesUserPath, authenticatedUser);
@@ -141,8 +143,19 @@ public class App implements ServerApp {
                     if (request.getPathname().equals("/decks")) {
                         return this.cardController.putCardsIntoDeck(request, authenticatedUser);
                     }
+
+                    String matchesTradingsPath = matchesUserPath("tradings", request);
+
+                    if (matchesTradingsPath != null) {
+                        return this.tradingController.performTrade(request, authenticatedUser, matchesTradingsPath);
+                    }
                 }
                 case DELETE:
+                    String matchesTradingsPath = matchesUserPath("tradings", request);
+
+                    if (matchesTradingsPath != null) {
+                        return this.tradingController.deleteTrade(authenticatedUser, matchesTradingsPath);
+                    }
                     break;
             }
         } catch (JsonProcessingException e) {
@@ -153,8 +166,8 @@ public class App implements ServerApp {
         return new Response(HttpStatus.NOT_FOUND, ContentType.JSON, "{ \"error\": \"Not Found\", \"data\": null }");
     }
 
-    private static String matchesUserPath(Request request) {
-        String pathRegex = "^/users/([\\w\\-\\.~:\\/\\?#\\[\\]@!$&'\\(\\)\\*\\+,;=]+)(?:\\?.*)?$";
+    private static String matchesUserPath(String rootPath, Request request) {
+        String pathRegex = "^/"+rootPath+"/([\\w\\-\\.~:\\/\\?#\\[\\]@!$&'\\(\\)\\*\\+,;=]+)(?:\\?.*)?$";
         Pattern pathPattern = Pattern.compile(pathRegex);
         Matcher pathMatcher = pathPattern.matcher(request.getPathname());
 

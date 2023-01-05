@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.User;
 import org.example.app.services.CardService;
+import org.example.app.services.TradingService;
 import org.example.app.services.exceptions.NotAvailableException;
 import org.example.app.services.exceptions.WrongCardAmountException;
 import org.example.http.ContentType;
@@ -22,8 +23,13 @@ public class CardController extends Controller {
     @Getter(AccessLevel.PRIVATE)
     private CardService cardService;
 
-    public CardController(CardService cardService) {
+    @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PRIVATE)
+    private TradingService tradingService;
+
+    public CardController(CardService cardService, TradingService tradingService) {
         setCardService(cardService);
+        setTradingService(tradingService);
     }
 
     public Response getCards(User authenticatedUser) throws JsonProcessingException {
@@ -76,7 +82,7 @@ public class CardController extends Controller {
         });
 
         try {
-            cardService.putCardsIntoDeck(cardIds, authenticatedUser);
+            cardService.putCardsIntoDeck(cardIds, authenticatedUser, tradingService.getAllTrades());
         } catch (WrongCardAmountException e) {
             return new Response(
                     HttpStatus.BAD_REQUEST,

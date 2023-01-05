@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Package;
+import org.example.app.models.Trade;
 import org.example.app.models.User;
 import org.example.app.services.exceptions.NoMoneyException;
 import org.example.app.services.exceptions.NotAvailableException;
@@ -52,9 +53,18 @@ public class CardService {
         return authenticatedUser.getDeck().getCards();
     }
 
-    public void putCardsIntoDeck(List<String> cardIds, User authenticatedUser) throws WrongCardAmountException, NotAvailableException {
-        if(cardIds.size() != 4) {
+    public void putCardsIntoDeck(List<String> cardIds, User authenticatedUser, List<Trade> trades) throws WrongCardAmountException, NotAvailableException {
+        if (cardIds.size() != 4) {
             throw new WrongCardAmountException();
+        }
+
+        // Also checking if card is locked in any ongoing trade:
+        List<String> cardIdsInActiveTrades = trades.stream()
+                .filter(trade -> !trade.isCompleted())
+                .map(trade -> trade.getCard().getId()).toList();
+
+        if (cardIds.stream().anyMatch(cardIdsInActiveTrades::contains)) {
+            throw new NotAvailableException();
         }
 
         List<Card> cards = getCardsFromUser(authenticatedUser).stream().filter(card -> cardIds.contains(card.getId())).toList();
