@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.io.*;
 import java.net.*;
+import java.sql.SQLException;
 
 @Getter(AccessLevel.PRIVATE)
 @Setter(AccessLevel.PRIVATE)
@@ -37,35 +38,11 @@ public class Server {
         while (true) {
             try {
                 setClientSocket(getServerSocket().accept());
-                setInputStream(new BufferedReader(new InputStreamReader(clientSocket.getInputStream())));
-                setRequest(new Request(getInputStream()));
-                setOutputStream(new PrintWriter(clientSocket.getOutputStream(), true));
 
-                if (request.getPathname() == null) {
-                    setResponse(new Response(
-                        HttpStatus.BAD_REQUEST,
-                        ContentType.TEXT,
-                ""
-                    ));
-                } else {
-                    setResponse(getApp().handleRequest(request));
-                }
-
-                getOutputStream().write(getResponse().build());
+                Thread thread = new Thread(new ClientHandler(app, clientSocket));
+                thread.start();
             } catch (IOException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    if (getOutputStream() != null) {
-                        getOutputStream().close();
-                    }
-                    if (getInputStream() != null) {
-                        getInputStream().close();
-                        getClientSocket().close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         }
     }

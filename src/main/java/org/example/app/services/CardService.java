@@ -11,6 +11,7 @@ import org.example.app.services.exceptions.NotAvailableException;
 import org.example.app.services.exceptions.WrongCardAmountException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,7 +20,7 @@ public class CardService {
     private List<Package> packages;
 
     public CardService() {
-        setPackages(new ArrayList<>());
+        setPackages(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public void createPackageWithCards(ArrayList<Card> cards, User authenticatedUser) {

@@ -7,17 +7,14 @@ import org.example.app.controllers.Controller;
 import org.example.app.models.Stat;
 import org.example.app.models.User;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class UserService {
     @Setter(AccessLevel.PRIVATE)
     private List<User> users;
 
     public UserService() {
-        setUsers(new ArrayList<>());
+        setUsers(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public User getUserById(String id) {

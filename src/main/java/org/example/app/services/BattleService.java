@@ -6,6 +6,7 @@ import org.example.app.models.Battle;
 import org.example.app.models.User;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BattleService {
@@ -13,7 +14,7 @@ public class BattleService {
     private List<Battle> battles;
 
     public BattleService() {
-        setBattles(new ArrayList<>());
+        setBattles(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public String createOrStartBattle(User authenticatedUser) {

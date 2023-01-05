@@ -9,6 +9,7 @@ import org.example.app.services.exceptions.ConflictException;
 import org.example.app.services.exceptions.NotAvailableException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -18,7 +19,7 @@ public class TradingService {
     private List<Trade> trades;
 
     public TradingService() {
-        setTrades(new ArrayList<>());
+        setTrades(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public List<Trade> getTrades(User authenticatedUser, boolean belongsToMe) {

@@ -180,7 +180,6 @@ public class Battle {
             // Draw a random card
             int index1 = rand.nextInt(deck1.size());
             int index2 = rand.nextInt(deck2.size());
-            System.out.println(deck1.size() + "vs." + deck2.size());
 
             Card card1 = deck1.get(index1);
             Card card2 = deck2.get(index2);

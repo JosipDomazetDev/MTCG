@@ -15,6 +15,8 @@ import org.example.server.ServerApp;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.lang.Thread.currentThread;
+
 
 public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
@@ -66,6 +68,8 @@ public class App implements ServerApp {
     }
 
     public Response handleRequest(Request request) {
+        System.out.println("Request handled by Thread: " + currentThread().getName());
+
         User authenticatedUser = sessionController.getAuthenticatedUser(request.getToken());
         boolean isAuthenticated = authenticatedUser != null;
 
@@ -167,7 +171,7 @@ public class App implements ServerApp {
     }
 
     private static String matchesUserPath(String rootPath, Request request) {
-        String pathRegex = "^/"+rootPath+"/([\\w\\-\\.~:\\/\\?#\\[\\]@!$&'\\(\\)\\*\\+,;=]+)(?:\\?.*)?$";
+        String pathRegex = "^/" + rootPath + "/([\\w\\-\\.~:\\/\\?#\\[\\]@!$&'\\(\\)\\*\\+,;=]+)(?:\\?.*)?$";
         Pattern pathPattern = Pattern.compile(pathRegex);
         Matcher pathMatcher = pathPattern.matcher(request.getPathname());
 
