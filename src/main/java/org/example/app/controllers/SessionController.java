@@ -28,7 +28,7 @@ public class SessionController extends Controller {
             return new Response(
                     HttpStatus.UNAUTHORIZED,
                     ContentType.JSON,
-                    "{\"error\": \"Login failed.\"}"
+                    "{\"error\": \"Invalid username/password provided.\"}"
             );
         }
 

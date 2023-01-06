@@ -33,9 +33,9 @@ public class UserController extends Controller {
     public Response putUser(Request request, String username, User authenticatedUser) throws JsonProcessingException {
         if (checkGivenUsernameIsntAuthenticatedUsername(username, authenticatedUser)) {
             return new Response(
-                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.NOT_FOUND,
                     ContentType.JSON,
-                    "\"User not found!\""
+                    "{ \"error\": \"User not found!\"}"
             );
         }
 
@@ -44,9 +44,9 @@ public class UserController extends Controller {
 
         if (user == null) {
             return new Response(
-                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.NOT_FOUND,
                     ContentType.JSON,
-                    "\"User not found!\""
+                    "{ \"error\": \"User not found!\"}"
             );
         }
 
@@ -63,9 +63,9 @@ public class UserController extends Controller {
     public Response getUser(String username, User authenticatedUser) throws JsonProcessingException {
         if (checkGivenUsernameIsntAuthenticatedUsername(username, authenticatedUser)) {
             return new Response(
-                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.NOT_FOUND,
                     ContentType.JSON,
-                    "\"User not found!\""
+                    "{ \"error\": \"User not found!\"}"
             );
         }
 
@@ -73,9 +73,9 @@ public class UserController extends Controller {
 
         if (user == null) {
             return new Response(
-                    HttpStatus.UNAUTHORIZED,
+                    HttpStatus.NOT_FOUND,
                     ContentType.JSON,
-                    "\"User not found!\""
+                    "{ \"error\": \"User not found!\"}"
             );
         }
 
@@ -100,7 +100,7 @@ public class UserController extends Controller {
 
         if (!isUserAdded) {
             return new Response(
-                    HttpStatus.BAD_REQUEST,
+                    HttpStatus.CONFLICT,
                     ContentType.JSON,
                     "{\"error\": \"User already created.\" }"
             );
@@ -109,7 +109,7 @@ public class UserController extends Controller {
         userRepository.insert(user);
 
         return new Response(
-                HttpStatus.OK,
+                HttpStatus.CREATED,
                 ContentType.JSON,
                 getObjectMapper().writeValueAsString(user)
         );
