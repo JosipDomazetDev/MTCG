@@ -115,9 +115,8 @@ public class UserController extends Controller {
         );
     }
 
-    @Override
     public void loadAll() {
-        List<User> userList = userRepository.loadAll();
+        List<User> userList = getUserRepository().loadAll();
         userService.getUsers().addAll(userList);
     }
 }

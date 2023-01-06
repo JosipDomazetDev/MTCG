@@ -29,7 +29,4 @@ public class Controller {
         }
         return null;
     }
-
-    public void loadAll() {
-    }
 }

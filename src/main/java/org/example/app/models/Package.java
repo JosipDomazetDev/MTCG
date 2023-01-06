@@ -30,4 +30,10 @@ public class Package {
 
         cards.forEach(card -> card.setPack(this));
     }
+
+    public Package(String id, int price, User user) {
+        this.id = id;
+        this.price = price;
+        this.user = user;
+    }
 }

@@ -1,6 +1,7 @@
 package org.example.app.services;
 
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Package;
@@ -17,6 +18,7 @@ import java.util.Objects;
 
 public class CardService {
     @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PUBLIC)
     private List<Package> packages;
 
     public CardService() {

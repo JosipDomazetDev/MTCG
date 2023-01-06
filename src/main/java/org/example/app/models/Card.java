@@ -26,25 +26,54 @@ public class Card {
     @JsonIgnore
     private User owner;
 
+    public static final String SPELL = "spell";
+    public static final String WATER = "water";
+    public static final String FIRE = "fire";
+
     @ConstructorProperties({"id", "name", "damage"})
     public Card(String id, String name, double damage) {
         this.id = id;
         this.name = name;
         this.damage = damage;
 
-        if (name.contains("Spell")) {
+        String lowerName = name.toLowerCase();
+
+        if (lowerName.contains(SPELL)) {
             this.cardType = CardType.SPELL;
         } else {
             this.cardType = CardType.MONSTER;
         }
 
-        if (name.contains("Water")) {
+        if (lowerName.contains(WATER)) {
             this.elementType = ElementType.WATER;
-        } else if (name.contains("Fire")) {
+        } else if (lowerName.contains(FIRE)) {
             this.elementType = ElementType.FIRE;
         } else {
             this.elementType = ElementType.NORMAL;
         }
+    }
+
+    public Card(String id, String name, double damage, String elementType, String cardType, User owner, Package pack) {
+        this.id = id;
+        this.name = name;
+        this.damage = damage;
+
+        if (cardType.contains(SPELL)) {
+            this.cardType = CardType.SPELL;
+        } else {
+            this.cardType = CardType.MONSTER;
+        }
+
+        if (elementType.contains(WATER)) {
+            this.elementType = ElementType.WATER;
+        } else if (elementType.contains(FIRE)) {
+            this.elementType = ElementType.FIRE;
+        } else {
+            this.elementType = ElementType.NORMAL;
+        }
+
+        this.owner = owner;
+        this.pack = pack;
     }
 
     @Override

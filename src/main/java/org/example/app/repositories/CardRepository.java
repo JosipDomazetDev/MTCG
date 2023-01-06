@@ -3,14 +3,16 @@ package org.example.app.repositories;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.app.models.Card;
-import org.example.app.models.Deck;
+import org.example.app.models.*;
 import org.example.app.models.Package;
-import org.example.app.models.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Setter
 @Getter
@@ -178,5 +180,70 @@ public class CardRepository implements Repository<Package> {
 
     }
 
+    private PreparedStatement createSelectCardStatement() throws SQLException {
+        String sql = "SELECT id, name, damage, elementtype, cardtype, fk_ownerid, fk_packid FROM card;";
+        return connection.prepareStatement(sql);
+    }
 
+    private PreparedStatement createSelectPackStatement() throws SQLException {
+        String sql = "SELECT id,price, fk_userid FROM package";
+        return connection.prepareStatement(sql);
+    }
+
+    public List<Package> loadAll(List<User> users) {
+        List<Card> cards = new ArrayList<>();
+        List<Package> packs = new ArrayList<>();
+        try (
+                PreparedStatement cardStatement = createSelectCardStatement();
+                PreparedStatement packStatement = createSelectPackStatement();
+                ResultSet rsCards = cardStatement.executeQuery();
+                ResultSet rsPacks = packStatement.executeQuery()
+
+        ) {
+            while (rsPacks.next()) {
+                String id = rsPacks.getString(1);
+                int price = rsPacks.getInt(2);
+                String fkUserid = rsPacks.getString(3);
+                User user = users.stream()
+                        .filter(u -> Objects.equals(u.getId(), fkUserid))
+                        .findFirst().orElse(null);
+
+
+                Package pack = new Package(id, price, user);
+                packs.add(pack);
+            }
+
+            while (rsCards.next()) {
+                String id = rsCards.getString(1);
+                String name = rsCards.getString(2);
+                double damage = rsCards.getInt(3);
+                String elementType = rsCards.getString(4);
+                String cardType = rsCards.getString(5);
+                String fkOwnerId = rsCards.getString(6);
+                String fkPackId = rsCards.getString(7);
+
+
+                User owner = users.stream()
+                        .filter(u -> Objects.equals(u.getId(), fkOwnerId))
+                        .findFirst().orElse(null);
+                Package pack = packs.stream().
+                        filter(p -> Objects.equals(p.getId(), fkPackId))
+                        .findFirst().orElse(null);
+
+                Card card = new Card(id, name, damage, elementType, cardType, owner, pack);
+
+                cards.add(card);
+            }
+
+            for (Package pack : packs) {
+                pack.setCards(cards.stream().filter(card -> Objects.equals(card.getPack().getId(), pack.getId())).toList());
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return packs;
+    }
 }

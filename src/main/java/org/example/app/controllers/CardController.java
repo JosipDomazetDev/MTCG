@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Card;
+import org.example.app.models.Package;
 import org.example.app.models.User;
 import org.example.app.repositories.CardRepository;
 import org.example.app.services.CardService;
@@ -134,5 +135,10 @@ public class CardController extends Controller {
                 ContentType.JSON,
                 getObjectMapper().writeValueAsString(foundCard)
         );
+    }
+
+    public void loadAll(List<User> users) {
+        List<Package> packList = getCardRepository().loadAll(users);
+        cardService.getPackages().addAll(packList);
     }
 }

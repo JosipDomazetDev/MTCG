@@ -82,9 +82,9 @@ public class App implements ServerApp {
 
 
             userController.loadAll();
-            cardController.loadAll();
-            battleController.loadAll();
-            tradingController.loadAll();
+            cardController.loadAll(userService.getUsers());
+//            battleController.loadAll();
+//            tradingController.loadAll();
 
         } catch (SQLException e) {
             e.printStackTrace();
