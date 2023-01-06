@@ -13,6 +13,7 @@ import org.example.http.HttpStatus;
 import org.example.server.Request;
 import org.example.server.Response;
 
+import java.util.List;
 import java.util.Objects;
 
 public class UserController extends Controller {
@@ -86,6 +87,7 @@ public class UserController extends Controller {
                 userJson
         );
     }
+
     private static boolean checkGivenUsernameIsntAuthenticatedUsername(String username, User authenticatedUser) {
         return !Objects.equals(authenticatedUser.getUsername(), username);
     }
@@ -113,4 +115,9 @@ public class UserController extends Controller {
         );
     }
 
+    @Override
+    public void loadAll() {
+        List<User> userList = userRepository.loadAll();
+        userService.getUsers().addAll(userList);
+    }
 }

@@ -3,9 +3,13 @@ package org.example.app.repositories;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.app.models.PasswordUtils;
 import org.example.app.models.User;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -78,24 +82,38 @@ public class UserRepository implements Repository<User> {
         }
     }
 
-//    public List<User> getUser(int userId) {
-//        try (
-//             PreparedStatement ps = createPreparedStatement( userId);
-//             ResultSet rs = ps.executeQuery()) {
-//
-//            // process the resultset here, all resources will be cleaned up
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private PreparedStatement createPreparedStatement( int userId) throws SQLException {
-//        String sql = "SELECT id, username FROM users WHERE id = ?";
-//        PreparedStatement ps = connection.prepareStatement(sql);
-//        ps.setInt(1, userId);
-//        return ps;
-//    }
+    public List<User> loadAll() {
+        List<User> users = new ArrayList<>();
+        try (
+                PreparedStatement ps = createSelectStatement();
+                ResultSet rs = ps.executeQuery()) {
+
+
+            while (rs.next()) {
+                String id = rs.getString(1);
+                String passwordHash = rs.getString(2);
+                int coins = rs.getInt(3);
+                String username = rs.getString(4);
+                String name = rs.getString(5);
+                String bio = rs.getString(6);
+                String image = rs.getString(7);
+
+                User user = new User(id, passwordHash, coins, username, name, bio, image);
+                users.add(user);
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return users;
+    }
+
+    private PreparedStatement createSelectStatement() throws SQLException {
+        String sql = "SELECT id,passwordhash,coins,username,name,bio,image FROM \"user\";";
+        return connection.prepareStatement(sql);
+    }
 
 
 }

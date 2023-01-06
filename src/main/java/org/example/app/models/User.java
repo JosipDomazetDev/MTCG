@@ -54,11 +54,20 @@ public class User {
         this.bio = null;
         this.image = null;
 
-        if (username.equals("admin")) {
-            isAdmin = true;
-        }
+        finishConstructing(username);
+    }
 
-        generateToken();
+
+    public User(String id, String passwordHash, int coins, String username, String name, String bio, String image) {
+        this.id = id;
+        this.passwordHash = passwordHash;
+        this.coins = coins;
+        this.username = username;
+        this.name = name;
+        this.bio = bio;
+        this.image = image;
+
+        finishConstructing(username);
     }
 
     public void generateToken() {
@@ -66,15 +75,12 @@ public class User {
         this.token = this.username + "-mtcgToken";
     }
 
-    public User(String id, String username, String token, int coins, String name, String bio, String image) {
-        this.id = id;
-        this.username = username;
-        this.passwordHash = null;
-        this.token = token;
-        this.coins = coins;
-        this.name = name;
-        this.bio = bio;
-        this.image = image;
+    private void finishConstructing(String username) {
+        if (username.equals("admin")) {
+            isAdmin = true;
+        }
+
+        generateToken();
     }
 
 

@@ -80,6 +80,12 @@ public class App implements ServerApp {
 
             setErrorController(new ErrorController());
 
+
+            userController.loadAll();
+            cardController.loadAll();
+            battleController.loadAll();
+            tradingController.loadAll();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }

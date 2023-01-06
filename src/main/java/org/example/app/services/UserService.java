@@ -2,6 +2,7 @@ package org.example.app.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 import org.example.app.controllers.Controller;
 import org.example.app.models.Stat;
@@ -11,6 +12,7 @@ import java.util.*;
 
 public class UserService {
     @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PUBLIC)
     private List<User> users;
 
     public UserService() {
