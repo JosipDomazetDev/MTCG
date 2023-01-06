@@ -57,7 +57,7 @@ public class CardRepository implements Repository<Package> {
     @Override
     public void insert(Package pack) {
         try (
-                PreparedStatement ps = createInsertPackageStatement(pack);
+                PreparedStatement ps = createInsertPackageStatement(pack)
         ) {
             ps.execute();
         } catch (SQLException e) {
@@ -98,7 +98,7 @@ public class CardRepository implements Repository<Package> {
     @Override
     public void update(Package pack) {
         try (
-                PreparedStatement ps = createUpdatePackageStatement(pack);
+                PreparedStatement ps = createUpdatePackageStatement(pack)
         ) {
             ps.execute();
         } catch (SQLException e) {
@@ -131,7 +131,7 @@ public class CardRepository implements Repository<Package> {
         update(pack);
 
         try (
-                PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser);
+                PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser)
         ) {
             ps.execute();
         } catch (SQLException e) {
@@ -160,7 +160,7 @@ public class CardRepository implements Repository<Package> {
     public void updateDeck(Deck deck) {
 
         try (
-                PreparedStatement psDelete = createDeleteDeckStatement(deck);
+                PreparedStatement psDelete = createDeleteDeckStatement(deck)
         ) {
             psDelete.execute();
 
@@ -170,7 +170,7 @@ public class CardRepository implements Repository<Package> {
 
         for (Card card : deck.getCards()) {
             try (
-                    PreparedStatement ps = createInsertDeckStatement(deck, card);
+                    PreparedStatement ps = createInsertDeckStatement(deck, card)
             ) {
                 ps.execute();
             } catch (SQLException e) {
@@ -186,7 +186,12 @@ public class CardRepository implements Repository<Package> {
     }
 
     private PreparedStatement createSelectPackStatement() throws SQLException {
-        String sql = "SELECT id,price, fk_userid FROM package";
+        String sql = "SELECT id, price, fk_userid FROM package";
+        return connection.prepareStatement(sql);
+    }
+
+    private PreparedStatement createSelectDeckStatement() throws SQLException {
+        String sql = "SELECT fk_userid, fk_cardid  FROM deck";
         return connection.prepareStatement(sql);
     }
 
@@ -196,9 +201,10 @@ public class CardRepository implements Repository<Package> {
         try (
                 PreparedStatement cardStatement = createSelectCardStatement();
                 PreparedStatement packStatement = createSelectPackStatement();
+                PreparedStatement deckStatement = createSelectDeckStatement();
                 ResultSet rsCards = cardStatement.executeQuery();
-                ResultSet rsPacks = packStatement.executeQuery()
-
+                ResultSet rsPacks = packStatement.executeQuery();
+                ResultSet rsDecks = deckStatement.executeQuery()
         ) {
             while (rsPacks.next()) {
                 String id = rsPacks.getString(1);
@@ -239,6 +245,24 @@ public class CardRepository implements Repository<Package> {
                 pack.setCards(cards.stream().filter(card -> Objects.equals(card.getPack().getId(), pack.getId())).toList());
             }
 
+
+            while (rsDecks.next()) {
+                String fkUserId = rsDecks.getString(1);
+                String fkCardId = rsDecks.getString(2);
+
+                User user = users.stream()
+                        .filter(u -> Objects.equals(u.getId(), fkUserId))
+                        .findFirst().orElse(null);
+
+
+                Card card = cards.stream().
+                        filter(c -> Objects.equals(c.getId(), fkCardId))
+                        .findFirst().orElse(null);
+
+                if (user != null) {
+                    user.getDeck().getCards().add(card);
+                }
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
