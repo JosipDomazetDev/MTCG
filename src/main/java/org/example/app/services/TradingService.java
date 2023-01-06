@@ -82,7 +82,7 @@ public class TradingService {
             throw new ConflictException();
         }
 
-        if (offeredCard.getDamage() < trade.getCard().getDamage() || trade.getType() != offeredCard.getCardType()) {
+        if (offeredCard.getDamage() < trade.getCard().getDamage() || trade.getCardType() != offeredCard.getCardType()) {
             // The requirements are not met (Type, MinimumDamage)
             throw new ConflictException();
         }

@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.User;
+import org.example.app.repositories.UserRepository;
 import org.example.app.services.UserService;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
@@ -19,8 +20,13 @@ public class UserController extends Controller {
     @Getter(AccessLevel.PRIVATE)
     private UserService userService;
 
-    public UserController(UserService userService) {
+    @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PRIVATE)
+    private UserRepository userRepository;
+
+    public UserController(UserService userService, UserRepository userRepository) {
         setUserService(userService);
+        setUserRepository(userRepository);
     }
 
     public Response putUser(Request request, String username, User authenticatedUser) throws JsonProcessingException {
@@ -96,6 +102,8 @@ public class UserController extends Controller {
                     "{\"error\": \"User already created.\" }"
             );
         }
+
+        userRepository.createUser(user);
 
         return new Response(
                 HttpStatus.OK,

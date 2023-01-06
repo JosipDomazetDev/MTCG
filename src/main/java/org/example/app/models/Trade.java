@@ -19,9 +19,8 @@ public class Trade {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String cardToTrade;
 
-    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     @JsonIgnore
-    private CardType type;
+    private CardType cardType;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private float minimumDamage;
@@ -35,18 +34,18 @@ public class Trade {
 
     @JsonProperty("type")
     private String getJsonType() {
-        return type == CardType.SPELL ? "Spell" : "Monster";
+        return cardType == CardType.SPELL ? "Spell" : "Monster";
     }
 
     @ConstructorProperties({"id", "cardToTrade", "type", "minimumDamage"})
-    public Trade(String id, String cardToTrade, String type, float minimumDamage) {
+    public Trade(String id, String cardToTrade, String cardType, float minimumDamage) {
         this.id = id;
         this.cardToTrade = cardToTrade;
 
-        if (type.toLowerCase().contains("spell")) {
-            this.type = CardType.SPELL;
+        if (cardType.toLowerCase().contains("spell")) {
+            this.cardType = CardType.SPELL;
         } else {
-            this.type = CardType.MONSTER;
+            this.cardType = CardType.MONSTER;
         }
         this.minimumDamage = minimumDamage;
     }
@@ -66,6 +65,7 @@ public class Trade {
         user2 = authenticatedUser;
     }
 
+    @JsonIgnore
     public boolean isCompleted() {
         return user2 != null;
     }

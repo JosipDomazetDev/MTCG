@@ -3,6 +3,7 @@ package org.example.app;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
+import org.example.app.repositories.UserRepository;
 import org.example.app.services.*;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
@@ -12,6 +13,8 @@ import org.example.server.Request;
 import org.example.server.Response;
 import org.example.server.ServerApp;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,25 +49,34 @@ public class App implements ServerApp {
     private ErrorController errorController;
 
     public App() {
-        setCityController(new CityController(new CityService()));
+        try {
+            Connection connection = new DatabaseService().getConnection();
 
-        UserService userService = new UserService();
-        setUserController(new UserController(userService));
-        setSessionController(new SessionController(userService));
+            setCityController(new CityController(new CityService()));
 
-        CardService cardService = new CardService();
-        TradingService tradingService = new TradingService();
+            UserService userService = new UserService();
+            UserRepository userRepository = new UserRepository(connection);
+            setUserController(new UserController(userService, userRepository));
+            setSessionController(new SessionController(userService));
 
-        setPackageController(new PackageController(cardService));
-        setCardController(new CardController(cardService, tradingService));
+            CardService cardService = new CardService();
+            TradingService tradingService = new TradingService();
 
-        setStatController(new StatController(userService));
+            setPackageController(new PackageController(cardService));
+            setCardController(new CardController(cardService, tradingService));
 
-        setBattleController(new BattleController(new BattleService()));
+            setStatController(new StatController(userService));
 
-        setTradingController(new TradingController(tradingService, cardService));
+            setBattleController(new BattleController(new BattleService()));
 
-        setErrorController(new ErrorController());
+            setTradingController(new TradingController(tradingService, cardService));
+
+            setErrorController(new ErrorController());
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public Response handleRequest(Request request) {

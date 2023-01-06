@@ -17,15 +17,6 @@ public class UserService {
         setUsers(Collections.synchronizedList(new ArrayList<>()));
     }
 
-    public User getUserById(String id) {
-        User foundUser = users.stream()
-                .filter(User -> Objects.equals(id, User.getId()))
-                .findAny()
-                .orElse(null);
-
-        return foundUser;
-    }
-
     public User getUser(String username) {
         return users.stream()
                 .filter(user -> Objects.equals(user.getUsername(), username))
@@ -55,10 +46,6 @@ public class UserService {
         return users.add(user);
     }
 
-    public void removeUser(String id) {
-        users.removeIf(User -> Objects.equals(id, User.getId()));
-    }
-
     public boolean login(User proposedUser) {
         User foundUser = users.stream().filter(user -> proposedUser.getUsername().equals(user.getUsername())).findFirst().orElse(null);
 
@@ -66,7 +53,13 @@ public class UserService {
             return false;
         }
 
-        return proposedUser.getPassword().equals(foundUser.getPassword());
+        // Both should already be hashed at this point
+        boolean loginSuccessful = proposedUser.getPasswordHash().equals(foundUser.getPasswordHash());
+        if (loginSuccessful) {
+            foundUser.generateToken();
+        }
+
+        return loginSuccessful;
     }
 
     public User getAuthenticatedUser(String token) {

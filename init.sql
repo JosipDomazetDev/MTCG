@@ -13,7 +13,6 @@ create table if not exists "user"
     id           varchar not null PRIMARY KEY,
     username     varchar not null,
     passwordHash varchar not null,
-    tokenHash    varchar,
     coins        integer,
     name         varchar,
     bio          varchar,
@@ -22,9 +21,6 @@ create table if not exists "user"
 
 create unique index if not exists user_username_uindex
     on "user" (username);
-
-create unique index if not exists user_token_uindex
-    on "user" (tokenHash);
 
 create table if not exists package
 (
@@ -143,3 +139,5 @@ create table if not exists trade
             REFERENCES "user" (id)
             ON DELETE CASCADE
 );
+INSERT INTO "user"(id, username, passwordHash, coins, name, bio, image)
+VALUES('josip','josip','josip',20, 'gkrkrg', 'drfrggr', 'fefrk');

@@ -4,16 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 import static org.example.app.models.BattleOutcome.*;
 
 @Getter
 @Setter
 public class Battle {
+    String id;
     User player1;
     User player2;
     StringBuilder battleLog = new StringBuilder();
@@ -22,6 +20,7 @@ public class Battle {
     BattleOutcome battleOutcome;
 
     public Battle(User authenticatedUser) {
+        this.id = UUID.randomUUID().toString();
         this.player1 = authenticatedUser;
     }
 

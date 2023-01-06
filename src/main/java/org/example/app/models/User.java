@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.example.app.services.exceptions.NoMoneyException;
 
 import java.beans.ConstructorProperties;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 @Getter
@@ -19,7 +20,7 @@ public class User {
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     @JsonIgnore
-    private String password;
+    private String passwordHash;
 
     private String token;
 
@@ -44,11 +45,10 @@ public class User {
 
 
     @ConstructorProperties({"username", "password"})
-    public User(String username, String password) {
+    public User(String username, String password) throws NoSuchAlgorithmException {
         this.id = UUID.randomUUID().toString();
         this.username = username.toLowerCase();
-        this.password = password;
-        this.token = this.username + "-mtcgToken";
+        this.passwordHash = PasswordUtils.hashPassword(password.toCharArray());
         this.coins = 20;
         this.name = null;
         this.bio = null;
@@ -57,12 +57,19 @@ public class User {
         if (username.equals("admin")) {
             isAdmin = true;
         }
+
+        generateToken();
+    }
+
+    public void generateToken() {
+        // In Reality use some lib here
+        this.token = this.username + "-mtcgToken";
     }
 
     public User(String id, String username, String token, int coins, String name, String bio, String image) {
         this.id = id;
         this.username = username;
-        this.password = null;
+        this.passwordHash = null;
         this.token = token;
         this.coins = coins;
         this.name = name;
@@ -72,7 +79,7 @@ public class User {
 
 
     public void buyPackage(Package packageToBeBought) throws NoMoneyException {
-        if(packageToBeBought.getPrice() > coins){
+        if (packageToBeBought.getPrice() > coins) {
             throw new NoMoneyException();
         }
 

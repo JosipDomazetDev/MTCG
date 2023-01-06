@@ -1,15 +1,15 @@
 package org.example.server;
 
-import org.example.app.App;
-import org.example.http.ContentType;
-import org.example.http.HttpStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.app.App;
 
-import java.io.*;
-import java.net.*;
-import java.sql.SQLException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 @Getter(AccessLevel.PRIVATE)
 @Setter(AccessLevel.PRIVATE)
