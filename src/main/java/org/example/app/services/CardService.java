@@ -7,6 +7,7 @@ import org.example.app.models.Card;
 import org.example.app.models.Package;
 import org.example.app.models.Trade;
 import org.example.app.models.User;
+import org.example.app.services.exceptions.ConflictException;
 import org.example.app.services.exceptions.NoMoneyException;
 import org.example.app.services.exceptions.NotAvailableException;
 import org.example.app.services.exceptions.WrongCardAmountException;
@@ -25,7 +26,15 @@ public class CardService {
         setPackages(Collections.synchronizedList(new ArrayList<>()));
     }
 
-    public Package createPackageWithCards(ArrayList<Card> cards, User authenticatedUser) {
+    public Package createPackageWithCards(ArrayList<Card> cards, User authenticatedUser) throws ConflictException {
+        List<String> allCardIds = packages.stream().flatMap(aPackage -> aPackage.getCards().stream()).toList()
+                .stream().map(Card::getId).toList();
+        List<String> cardIds = cards.stream().map(Card::getId).toList();
+
+        if (allCardIds.stream().anyMatch(cardIds::contains)) {
+            throw new ConflictException();
+        }
+
         Package pack = new Package(cards);
         packages.add(pack);
         return pack;

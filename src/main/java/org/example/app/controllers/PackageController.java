@@ -10,6 +10,7 @@ import org.example.app.models.Package;
 import org.example.app.models.User;
 import org.example.app.repositories.CardRepository;
 import org.example.app.services.CardService;
+import org.example.app.services.exceptions.ConflictException;
 import org.example.app.services.exceptions.NoMoneyException;
 import org.example.app.services.exceptions.NotAvailableException;
 import org.example.http.ContentType;
@@ -33,14 +34,33 @@ public class PackageController extends Controller {
     }
 
     public Response createPackage(Request request, User authenticatedUser) throws JsonProcessingException {
+        if (!authenticatedUser.isAdmin()) {
+            return new Response(
+                    HttpStatus.FORBIDDEN,
+                    ContentType.JSON,
+                    "{ \"error\": \"Provided user is not \"admin\"\"}"
+
+            );
+        }
         ArrayList<Card> cards = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
         });
-        Package pack = cardService.createPackageWithCards(cards, authenticatedUser);
+
+        Package pack;
+        try {
+            pack = cardService.createPackageWithCards(cards, authenticatedUser);
+        } catch (ConflictException e) {
+            return new Response(
+                    HttpStatus.CONFLICT,
+                    ContentType.JSON,
+                    "{ \"error\": \"At least one card in the packages already exists\"}"
+
+            );
+        }
 
         cardRepository.insert(pack);
 
         return new Response(
-                HttpStatus.OK,
+                HttpStatus.CREATED,
                 ContentType.JSON,
                 "\"Package created!\""
         );

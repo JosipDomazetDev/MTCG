@@ -50,9 +50,6 @@ public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
     private TradingController tradingController;
 
-    @Setter(AccessLevel.PRIVATE)
-    private ErrorController errorController;
-
     public App() {
         try {
             Connection connection = new DatabaseService().getConnection();
@@ -79,8 +76,6 @@ public class App implements ServerApp {
             setBattleController(new BattleController(new BattleService(), battleRepository));
 
             setTradingController(new TradingController(tradingService, cardService, tradeRepository));
-
-            setErrorController(new ErrorController());
 
 
             userController.loadAll();
@@ -110,7 +105,7 @@ public class App implements ServerApp {
                     }
 
                     if (!isAuthenticated) {
-                        return this.errorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized(request);
                     }
 
                     String matchesUserPath = matchesRootPath("users", request);
@@ -153,13 +148,9 @@ public class App implements ServerApp {
                     }
 
                     if (!isAuthenticated) {
-                        return this.errorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized(request);
                     }
                     if (request.getPathname().equals("/packages")) {
-                        if (!authenticatedUser.isAdmin()) {
-                            return this.errorController.sendUnauthorized(request);
-                        }
-
                         return this.packageController.createPackage(request, authenticatedUser);
                     }
                     if (request.getPathname().equals("/transactions/packages")) {
@@ -181,7 +172,7 @@ public class App implements ServerApp {
                 }
                 case PUT -> {
                     if (!isAuthenticated) {
-                        return this.errorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized(request);
                     }
 
                     String matchesUserPath = matchesRootPath("users", request);
@@ -195,7 +186,7 @@ public class App implements ServerApp {
                 }
                 case DELETE -> {
                     if (!isAuthenticated) {
-                        return this.errorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized(request);
                     }
                     String matchesTradingsPath = matchesRootPath("tradings", request);
                     if (matchesTradingsPath != null) {
