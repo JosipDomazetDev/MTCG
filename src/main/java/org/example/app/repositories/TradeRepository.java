@@ -3,11 +3,13 @@ package org.example.app.repositories;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.app.models.Card;
 import org.example.app.models.Trade;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 @Setter
 @Getter
@@ -70,4 +72,40 @@ public class TradeRepository implements Repository<Trade> {
         }
     }
 
+    private PreparedStatement createUpdateCardOwnerStatement(Card card) throws SQLException {
+        String sql = "UPDATE card SET fk_ownerid=? WHERE id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, card.getOwner().getId());
+        ps.setString(2, card.getId());
+
+        return ps;
+    }
+
+    private PreparedStatement createUpdateTradeStatement(Trade trade) throws SQLException {
+        String sql = "UPDATE trade SET fk_user2id=? WHERE id=?;";
+
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, trade.getUser2().getId());
+        ps.setString(2, trade.getId());
+
+        return ps;
+    }
+
+    public void performTrade(List<Object> result) {
+        Card card = (Card) result.get(0);
+        Card offeredCard = (Card) result.get(1);
+        Trade trade = (Trade) result.get(2);
+
+        try (
+                PreparedStatement ps1 = createUpdateCardOwnerStatement(card);
+                PreparedStatement ps2 = createUpdateCardOwnerStatement(offeredCard);
+                PreparedStatement psTrade = createUpdateTradeStatement(trade);
+        ) {
+            ps1.execute();
+            ps2.execute();
+            psTrade.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

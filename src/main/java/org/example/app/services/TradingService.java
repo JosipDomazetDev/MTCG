@@ -67,7 +67,7 @@ public class TradingService {
         trades.remove(trade);
     }
 
-    public void performTrade(String tradeId, String cardId, List<Card> cardsFromUser, List<Card> cardsFromDeck, User authenticatedUser) throws NotAvailableException, ConflictException {
+    public ArrayList<Object> performTrade(String tradeId, String cardId, List<Card> cardsFromUser, List<Card> cardsFromDeck, User authenticatedUser) throws NotAvailableException, ConflictException {
         Trade trade = getTradeById(tradeId);
 
         if (trade == null) {
@@ -100,6 +100,12 @@ public class TradingService {
 
         trade.getCard().swapWith(offeredCard);
         trade.complete(authenticatedUser);
+
+        ArrayList<Object> ret = new ArrayList<>();
+        ret.add(trade.getCard());
+        ret.add(offeredCard);
+        ret.add(trade);
+        return ret;
     }
 
     private Trade getTradeById(String tradeId) {

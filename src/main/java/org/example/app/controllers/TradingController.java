@@ -116,7 +116,8 @@ public class TradingController extends Controller {
             List<Card> cardsFromUser = cardService.getCardsFromUser(authenticatedUser);
             List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
 
-            tradingService.performTrade(tradeId, cardId, cardsFromUser, cardsFromDeck, authenticatedUser);
+            List<Object> result = tradingService.performTrade(tradeId, cardId, cardsFromUser, cardsFromDeck, authenticatedUser);
+            tradeRepository.performTrade(result);
 
             return new Response(
                     HttpStatus.OK,

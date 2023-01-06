@@ -133,6 +133,7 @@ public class App implements ServerApp {
                         boolean belongsToMe = request.getParams().contains("belongs=me");
                         return this.tradingController.getTrades(authenticatedUser, belongsToMe);
                     }
+                    break;
                 }
                 case POST: {
                     if (request.getPathname().equals("/users")) {
@@ -158,9 +159,16 @@ public class App implements ServerApp {
                     if (request.getPathname().equals("/battles")) {
                         return this.battleController.createOrStartBattle(authenticatedUser);
                     }
+
+                    String matchesTradingsPath = matchesRootPath("tradings", request);
+                    if (matchesTradingsPath != null) {
+                        return this.tradingController.performTrade(request, authenticatedUser, matchesTradingsPath);
+                    }
+
                     if (request.getPathname().equals("/tradings")) {
                         return this.tradingController.postTrades(request, authenticatedUser);
                     }
+                    break;
                 }
                 case PUT: {
                     if (!isAuthenticated) {
@@ -175,12 +183,7 @@ public class App implements ServerApp {
                     if (request.getPathname().equals("/decks")) {
                         return this.cardController.putCardsIntoDeck(request, authenticatedUser);
                     }
-
-                    String matchesTradingsPath = matchesRootPath("tradings", request);
-
-                    if (matchesTradingsPath != null) {
-                        return this.tradingController.performTrade(request, authenticatedUser, matchesTradingsPath);
-                    }
+                    break;
                 }
                 case DELETE:
                     if (!isAuthenticated) {
