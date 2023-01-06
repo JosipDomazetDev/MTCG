@@ -58,17 +58,17 @@ public class Card {
         this.name = name;
         this.damage = damage;
 
-        if (cardType.contains(SPELL)) {
+        if (cardType.contains(CardType.SPELL.toString())) {
             this.cardType = CardType.SPELL;
-        } else {
+        } else if (cardType.contains(CardType.MONSTER.toString())) {
             this.cardType = CardType.MONSTER;
         }
 
-        if (elementType.contains(WATER)) {
+        if (elementType.contains(ElementType.WATER.toString())) {
             this.elementType = ElementType.WATER;
-        } else if (elementType.contains(FIRE)) {
+        } else if (elementType.contains(ElementType.FIRE.toString())) {
             this.elementType = ElementType.FIRE;
-        } else {
+        } else if (elementType.contains(ElementType.NORMAL.toString())) {
             this.elementType = ElementType.NORMAL;
         }
 

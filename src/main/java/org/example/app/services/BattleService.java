@@ -1,6 +1,7 @@
 package org.example.app.services;
 
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Battle;
 import org.example.app.models.User;
@@ -11,6 +12,7 @@ import java.util.List;
 
 public class BattleService {
     @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PUBLIC)
     private List<Battle> battles;
 
     public BattleService() {

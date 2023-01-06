@@ -24,6 +24,21 @@ public class Battle {
         this.player1 = authenticatedUser;
     }
 
+    public Battle(String id, User player1, User player2, String battleLog, String battleOutcome) {
+        this.id = id;
+        this.player1 = player1;
+        this.player2 = player2;
+        this.battleLog.append(battleLog);
+
+        if (battleOutcome.equals(WIN_PLAYER_1.toString())) {
+            this.battleOutcome = WIN_PLAYER_1;
+        } else if (battleOutcome.equals(WIN_PLAYER_2.toString())) {
+            this.battleOutcome = WIN_PLAYER_2;
+        } else if (battleOutcome.equals(DRAW.toString())) {
+            this.battleOutcome = DRAW;
+        }
+    }
+
 
     public boolean isCompleted() {
         return battleOutcome != null;

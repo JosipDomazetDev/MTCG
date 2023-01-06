@@ -11,6 +11,8 @@ import org.example.http.ContentType;
 import org.example.http.HttpStatus;
 import org.example.server.Response;
 
+import java.util.List;
+
 public class BattleController extends Controller {
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
@@ -39,5 +41,10 @@ public class BattleController extends Controller {
                 ContentType.JSON,
                 battleLog
         );
+    }
+
+    public void loadAll(List<User> users) {
+        List<Battle> battleList = getBattleRepository().loadAll(users);
+        getBattleService().getBattles().addAll(battleList);
     }
 }
