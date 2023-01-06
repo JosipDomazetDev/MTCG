@@ -49,7 +49,7 @@ public class UserController extends Controller {
             );
         }
 
-        userRepository.putUser(user);
+        userRepository.update(user);
         String userJson = getObjectMapper().writeValueAsString(user);
 
         return new Response(
@@ -104,7 +104,7 @@ public class UserController extends Controller {
             );
         }
 
-        userRepository.createUser(user);
+        userRepository.add(user);
 
         return new Response(
                 HttpStatus.OK,

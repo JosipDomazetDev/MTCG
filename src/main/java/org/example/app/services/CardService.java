@@ -23,9 +23,10 @@ public class CardService {
         setPackages(Collections.synchronizedList(new ArrayList<>()));
     }
 
-    public void createPackageWithCards(ArrayList<Card> cards, User authenticatedUser) {
+    public Package createPackageWithCards(ArrayList<Card> cards, User authenticatedUser) {
         Package pack = new Package(cards);
         packages.add(pack);
+        return pack;
     }
 
     public Package buyPackage(User authenticatedUser) throws NotAvailableException, NoMoneyException {

@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Package;
 import org.example.app.models.User;
+import org.example.app.repositories.PackageRepository;
 import org.example.app.services.CardService;
 import org.example.app.services.exceptions.NoMoneyException;
 import org.example.app.services.exceptions.NotAvailableException;
@@ -22,15 +23,21 @@ public class PackageController extends Controller {
     @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PRIVATE)
     private CardService cardService;
+    @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PRIVATE)
+    PackageRepository packageRepository;
 
-    public PackageController(CardService cardService) {
+    public PackageController(CardService cardService, PackageRepository packageRepository) {
         setCardService(cardService);
+        setPackageRepository(packageRepository);
     }
 
     public Response createPackage(Request request, User authenticatedUser) throws JsonProcessingException {
         ArrayList<Card> cards = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
         });
-        cardService.createPackageWithCards(cards, authenticatedUser);
+        Package pack = cardService.createPackageWithCards(cards, authenticatedUser);
+
+        packageRepository.add(pack);
 
         return new Response(
                 HttpStatus.OK,

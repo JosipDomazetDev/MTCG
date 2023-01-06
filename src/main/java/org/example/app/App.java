@@ -3,6 +3,7 @@ package org.example.app;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
+import org.example.app.repositories.PackageRepository;
 import org.example.app.repositories.UserRepository;
 import org.example.app.services.*;
 import org.example.http.ContentType;
@@ -51,18 +52,20 @@ public class App implements ServerApp {
     public App() {
         try {
             Connection connection = new DatabaseService().getConnection();
+            UserRepository userRepository = new UserRepository(connection);
+            PackageRepository packageRepository = new PackageRepository(connection);
+
 
             setCityController(new CityController(new CityService()));
 
             UserService userService = new UserService();
-            UserRepository userRepository = new UserRepository(connection);
             setUserController(new UserController(userService, userRepository));
             setSessionController(new SessionController(userService));
 
             CardService cardService = new CardService();
             TradingService tradingService = new TradingService();
 
-            setPackageController(new PackageController(cardService));
+            setPackageController(new PackageController(cardService, packageRepository));
             setCardController(new CardController(cardService, tradingService));
 
             setStatController(new StatController(userService));

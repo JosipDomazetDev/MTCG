@@ -9,7 +9,7 @@ import java.sql.*;
 
 @Setter
 @Getter
-public class UserRepository implements Repository {
+public class UserRepository implements Repository<User> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     Connection connection;
@@ -34,7 +34,9 @@ public class UserRepository implements Repository {
         return ps;
     }
 
-    public void createUser(User user) {
+
+    @Override
+    public void add(User user) {
         try (
                 PreparedStatement ps = createInsertStatement(user)
         ) {
@@ -55,7 +57,8 @@ public class UserRepository implements Repository {
         return ps;
     }
 
-    public void putUser(User user) {
+    @Override
+    public void update(User user) {
         try (
                 PreparedStatement ps = createUpdateStatement(user)
         ) {
