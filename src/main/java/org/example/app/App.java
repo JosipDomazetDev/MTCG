@@ -28,8 +28,6 @@ import static java.lang.Thread.currentThread;
 
 public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
-    private CityController cityController;
-    @Setter(AccessLevel.PRIVATE)
     private UserController userController;
 
     @Setter(AccessLevel.PRIVATE)
@@ -58,8 +56,6 @@ public class App implements ServerApp {
             BattleRepository battleRepository = new BattleRepository(connection);
             TradeRepository tradeRepository = new TradeRepository(connection);
 
-
-            setCityController(new CityController(new CityService()));
 
             UserService userService = new UserService();
             setUserController(new UserController(userService, userRepository));
@@ -100,10 +96,6 @@ public class App implements ServerApp {
         try {
             switch (request.getMethod()) {
                 case GET -> {
-                    if (request.getPathname().equals("/cities")) {
-                        return this.cityController.getCities();
-                    }
-
                     if (!isAuthenticated) {
                         return ErrorController.sendUnauthorized(request);
                     }
