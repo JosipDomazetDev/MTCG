@@ -66,7 +66,7 @@ public class TradingController extends Controller {
             tradeRepository.insert(trade);
 
             return new Response(
-                    HttpStatus.OK,
+                    HttpStatus.CREATED,
                     ContentType.JSON,
                     getObjectMapper().writeValueAsString(trade)
             );
@@ -126,7 +126,7 @@ public class TradingController extends Controller {
             );
         } catch (NotAvailableException e) {
             return new Response(
-                    HttpStatus.CONFLICT,
+                    HttpStatus.NOT_FOUND,
                     ContentType.JSON,
                     "{ \"error\": \"The provided deal ID was not found!\"}"
             );
