@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Trade;
 import org.example.app.models.User;
+import org.example.app.repositories.TradeRepository;
 import org.example.app.services.CardService;
 import org.example.app.services.TradingService;
 import org.example.app.services.exceptions.ConflictException;
@@ -27,10 +28,14 @@ public class TradingController extends Controller {
     @Getter(AccessLevel.PRIVATE)
     private CardService cardService;
 
+    @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PRIVATE)
+    private TradeRepository tradeRepository;
 
-    public TradingController(TradingService tradingService, CardService cardService) {
+    public TradingController(TradingService tradingService, CardService cardService, TradeRepository tradeRepository) {
         setTradingService(tradingService);
         setCardService(cardService);
+        setTradeRepository(tradeRepository);
     }
 
     public Response getTrades(User authenticatedUser, boolean belongsToMe) throws JsonProcessingException {
@@ -58,6 +63,7 @@ public class TradingController extends Controller {
             List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
 
             tradingService.postTrades(trade, cardsFromUser, cardsFromDeck, authenticatedUser);
+            tradeRepository.insert(trade);
 
             return new Response(
                     HttpStatus.OK,

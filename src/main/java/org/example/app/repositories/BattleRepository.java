@@ -15,7 +15,6 @@ public class BattleRepository implements Repository<Battle> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     Connection connection;
-    private String id;
 
     public BattleRepository(Connection connection) {
         setConnection(connection);

@@ -14,7 +14,6 @@ public class UserRepository implements Repository<User> {
     @Setter(AccessLevel.PRIVATE)
     Connection connection;
 
-
     public UserRepository(Connection connection) {
         setConnection(connection);
     }

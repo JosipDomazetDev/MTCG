@@ -5,6 +5,7 @@ import org.example.app.controllers.*;
 import org.example.app.models.User;
 import org.example.app.repositories.BattleRepository;
 import org.example.app.repositories.CardRepository;
+import org.example.app.repositories.TradeRepository;
 import org.example.app.repositories.UserRepository;
 import org.example.app.services.*;
 import org.example.http.ContentType;
@@ -56,6 +57,7 @@ public class App implements ServerApp {
             UserRepository userRepository = new UserRepository(connection);
             CardRepository cardRepository = new CardRepository(connection);
             BattleRepository battleRepository = new BattleRepository(connection);
+            TradeRepository tradeRepository = new TradeRepository(connection);
 
 
             setCityController(new CityController(new CityService()));
@@ -74,7 +76,7 @@ public class App implements ServerApp {
 
             setBattleController(new BattleController(new BattleService(), battleRepository));
 
-            setTradingController(new TradingController(tradingService, cardService));
+            setTradingController(new TradingController(tradingService, cardService, tradeRepository));
 
             setErrorController(new ErrorController());
 

@@ -17,7 +17,6 @@ public class CardRepository implements Repository<Package> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     Connection connection;
-    private String id;
 
     public CardRepository(Connection connection) {
         setConnection(connection);
@@ -45,7 +44,7 @@ public class CardRepository implements Repository<Package> {
         ps.setDouble(3, card.getDamage());
         ps.setString(4, card.getElementType().toString().toLowerCase());
         ps.setString(5, card.getCardType().toString().toLowerCase());
-        id = card.getOwner() == null ? null : card.getOwner().getId();
+        String id = card.getOwner() == null ? null : card.getOwner().getId();
         ps.setString(6, id);
         ps.setString(7, card.getPack().getId());
         return ps;
