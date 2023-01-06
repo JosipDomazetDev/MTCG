@@ -11,12 +11,10 @@ import org.example.app.models.User;
 import java.util.*;
 
 public class UserService {
-    @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PUBLIC)
-    private List<User> users;
+    private final List<User> users = Collections.synchronizedList(new ArrayList<>());
 
     public UserService() {
-        setUsers(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public User getUser(String username) {
@@ -26,26 +24,33 @@ public class UserService {
     }
 
     public User putUser(String username, JsonNode rootNode) {
-        User user = users.stream()
-                .filter(u -> Objects.equals(u.getUsername(), username))
-                .findFirst().orElse(null);
+        User user;
+        synchronized (users) {
+            user = users.stream()
+                    .filter(u -> Objects.equals(u.getUsername(), username))
+                    .findFirst().orElse(null);
 
-        if (user == null) return null;
+            if (user == null) return null;
+        }
 
-        user.setName(Controller.getFieldValueCaseInsensitive(rootNode, "name"));
-        user.setBio(Controller.getFieldValueCaseInsensitive(rootNode, "bio"));
-        user.setImage(Controller.getFieldValueCaseInsensitive(rootNode, "image"));
+        synchronized (user) {
+            user.setName(Controller.getFieldValueCaseInsensitive(rootNode, "name"));
+            user.setBio(Controller.getFieldValueCaseInsensitive(rootNode, "bio"));
+            user.setImage(Controller.getFieldValueCaseInsensitive(rootNode, "image"));
+        }
 
         return user;
     }
 
 
     public boolean addUser(User user) {
-        if (users.stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
-            return false;
-        }
+        synchronized (users) {
+            if (users.stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
+                return false;
+            }
 
-        return users.add(user);
+            return users.add(user);
+        }
     }
 
     public boolean login(User proposedUser) {
@@ -58,7 +63,9 @@ public class UserService {
         // Both should already be hashed at this point
         boolean loginSuccessful = proposedUser.getPasswordHash().equals(foundUser.getPasswordHash());
         if (loginSuccessful) {
-            foundUser.generateToken();
+            synchronized (foundUser) {
+                foundUser.generateToken();
+            }
         }
 
         return loginSuccessful;
