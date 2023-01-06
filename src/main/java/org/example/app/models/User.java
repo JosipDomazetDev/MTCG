@@ -58,7 +58,7 @@ public class User {
     }
 
 
-    public User(String id, String passwordHash, int coins, String username, String name, String bio, String image) {
+    public User(String id, String passwordHash, int coins, String username, String name, String bio, String image, Stat stat) {
         this.id = id;
         this.passwordHash = passwordHash;
         this.coins = coins;
@@ -66,6 +66,8 @@ public class User {
         this.name = name;
         this.bio = bio;
         this.image = image;
+
+        this.stat = stat == null ? new Stat(this) : stat.assignUser(this);
 
         finishConstructing(username);
     }

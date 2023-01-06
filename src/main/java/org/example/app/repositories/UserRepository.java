@@ -3,13 +3,13 @@ package org.example.app.repositories;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.app.models.PasswordUtils;
+import org.example.app.models.Stat;
 import org.example.app.models.User;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
 
 @Setter
 @Getter
@@ -52,9 +52,8 @@ public class UserRepository implements Repository<User> {
                 PreparedStatement ps = createInsertStatement(user);
                 PreparedStatement psStat = createInsertStatStatement(user)
         ) {
-            if (ps.execute()) {
-                psStat.execute();
-            }
+            ps.execute();
+            psStat.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -84,21 +83,37 @@ public class UserRepository implements Repository<User> {
 
     public List<User> loadAll() {
         List<User> users = new ArrayList<>();
+        List<Stat> stats = new ArrayList<>();
         try (
-                PreparedStatement ps = createSelectStatement();
-                ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = createSelectUserStatement();
+                PreparedStatement psStats = createSelectStatStatement();
+                ResultSet rsUsers = ps.executeQuery();
+                ResultSet rsStats = psStats.executeQuery()
 
+        ) {
+            while (rsStats.next()) {
+                String fkUserId = rsStats.getString(1);
+                int elo = rsStats.getInt(2);
+                int wins = rsStats.getInt(3);
+                int draws = rsStats.getInt(4);
+                int total = rsStats.getInt(5);
+                Stat stat = new Stat(fkUserId, elo, wins, draws, total);
+                stats.add(stat);
+            }
 
-            while (rs.next()) {
-                String id = rs.getString(1);
-                String passwordHash = rs.getString(2);
-                int coins = rs.getInt(3);
-                String username = rs.getString(4);
-                String name = rs.getString(5);
-                String bio = rs.getString(6);
-                String image = rs.getString(7);
+            while (rsUsers.next()) {
+                String id = rsUsers.getString(1);
+                String passwordHash = rsUsers.getString(2);
+                int coins = rsUsers.getInt(3);
+                String username = rsUsers.getString(4);
+                String name = rsUsers.getString(5);
+                String bio = rsUsers.getString(6);
+                String image = rsUsers.getString(7);
 
-                User user = new User(id, passwordHash, coins, username, name, bio, image);
+                Stat stat = stats.stream().filter(stat1 -> Objects.equals(stat1.getFkUserId(), id)).findFirst().orElse(null);
+
+                User user = new User(id, passwordHash, coins, username, name, bio, image, stat);
+
                 users.add(user);
             }
 
@@ -110,10 +125,14 @@ public class UserRepository implements Repository<User> {
         return users;
     }
 
-    private PreparedStatement createSelectStatement() throws SQLException {
+    private PreparedStatement createSelectUserStatement() throws SQLException {
         String sql = "SELECT id,passwordhash,coins,username,name,bio,image FROM \"user\";";
         return connection.prepareStatement(sql);
     }
 
+    private PreparedStatement createSelectStatStatement() throws SQLException {
+        String sql = "SELECT fk_userid, elo, wins, draws, total FROM stat";
+        return connection.prepareStatement(sql);
+    }
 
 }

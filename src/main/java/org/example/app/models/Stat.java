@@ -19,6 +19,18 @@ public class Stat {
     @JsonIgnore
     private int total;
 
+    // Only used at server start as db helper
+    @JsonIgnore
+    String fkUserId;
+
+    public Stat(String fkUserId, int elo, int wins, int draws, int total) {
+        this.fkUserId = fkUserId;
+        this.elo = elo;
+        this.wins = wins;
+        this.draws = draws;
+        this.total = total;
+    }
+
     public Stat(User user) {
         this.user = user;
     }
@@ -27,6 +39,7 @@ public class Stat {
     private String getName() {
         return user.getName();
     }
+
     @JsonProperty("losses")
     private int getDefeats() {
         return total - wins - draws;
@@ -46,5 +59,11 @@ public class Stat {
     public void draw() {
         total++;
         draws++;
+    }
+
+    public Stat assignUser(User user) {
+        this.user = user;
+        fkUserId = null;
+        return this;
     }
 }
