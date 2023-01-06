@@ -205,10 +205,12 @@ public class App implements ServerApp {
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            return new Response(HttpStatus.BAD_REQUEST, ContentType.JSON, "{ \"error\": \"Illegal JSON-Format!\", \"data\": null }");
+            return new Response(HttpStatus.BAD_REQUEST, ContentType.JSON, "{ \"error\": \"Illegal JSON-Format!\"}");
+        } catch (InterruptedException e) {
+            return new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "{ \"error\": \"Your thread was interrupted!\"}");
         }
 
-        return new Response(HttpStatus.NOT_FOUND, ContentType.JSON, "{ \"error\": \"Not Found\", \"data\": null }");
+        return new Response(HttpStatus.NOT_FOUND, ContentType.JSON, "{ \"error\": \"Not Found\"");
     }
 
     private static String matchesRootPath(String rootPath, Request request) {
