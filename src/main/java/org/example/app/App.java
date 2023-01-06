@@ -104,7 +104,7 @@ public class App implements ServerApp {
 
         try {
             switch (request.getMethod()) {
-                case GET: {
+                case GET -> {
                     if (request.getPathname().equals("/cities")) {
                         return this.cityController.getCities();
                     }
@@ -143,9 +143,8 @@ public class App implements ServerApp {
                         boolean belongsToMe = request.getParams().contains("belongs=me");
                         return this.tradingController.getTrades(authenticatedUser, belongsToMe);
                     }
-                    break;
                 }
-                case POST: {
+                case POST -> {
                     if (request.getPathname().equals("/users")) {
                         return this.userController.createUser(request);
                     }
@@ -167,6 +166,7 @@ public class App implements ServerApp {
                         return this.packageController.buyPackage(authenticatedUser);
                     }
                     if (request.getPathname().equals("/battles")) {
+
                         return this.battleController.createOrStartBattle(authenticatedUser);
                     }
 
@@ -178,9 +178,8 @@ public class App implements ServerApp {
                     if (request.getPathname().equals("/tradings")) {
                         return this.tradingController.postTrades(request, authenticatedUser);
                     }
-                    break;
                 }
-                case PUT: {
+                case PUT -> {
                     if (!isAuthenticated) {
                         return this.errorController.sendUnauthorized(request);
                     }
@@ -193,19 +192,16 @@ public class App implements ServerApp {
                     if (request.getPathname().equals("/decks")) {
                         return this.cardController.putCardsIntoDeck(request, authenticatedUser);
                     }
-                    break;
                 }
-                case DELETE:
+                case DELETE -> {
                     if (!isAuthenticated) {
                         return this.errorController.sendUnauthorized(request);
                     }
-
                     String matchesTradingsPath = matchesRootPath("tradings", request);
-
                     if (matchesTradingsPath != null) {
                         return this.tradingController.deleteTrade(authenticatedUser, matchesTradingsPath);
                     }
-                    break;
+                }
             }
         } catch (JsonProcessingException e) {
             e.printStackTrace();
