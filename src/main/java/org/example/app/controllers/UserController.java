@@ -104,7 +104,7 @@ public class UserController extends Controller {
             );
         }
 
-        userRepository.add(user);
+        userRepository.insert(user);
 
         return new Response(
                 HttpStatus.OK,

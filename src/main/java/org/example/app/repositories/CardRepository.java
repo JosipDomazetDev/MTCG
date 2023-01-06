@@ -53,7 +53,7 @@ public class CardRepository implements Repository<Package> {
 
 
     @Override
-    public void add(Package pack) {
+    public void insert(Package pack) {
         try (
                 PreparedStatement ps = createInsertPackageStatement(pack);
         ) {

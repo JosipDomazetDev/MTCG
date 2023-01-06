@@ -37,7 +37,7 @@ public class PackageController extends Controller {
         });
         Package pack = cardService.createPackageWithCards(cards, authenticatedUser);
 
-        cardRepository.add(pack);
+        cardRepository.insert(pack);
 
         return new Response(
                 HttpStatus.OK,

@@ -17,20 +17,20 @@ public class BattleService {
         setBattles(Collections.synchronizedList(new ArrayList<>()));
     }
 
-    public String createOrStartBattle(User authenticatedUser) {
+    public Battle createOrStartBattle(User authenticatedUser) {
         List<Battle> freeBattles = getFreeBattles();
 
         if (freeBattles.isEmpty()) {
             // Create new Battle
             battles.add(new Battle(authenticatedUser));
 
-            return "false";
+            return null;
         } else {
             Battle battle = freeBattles.get(0);
             battle.setPlayer2(authenticatedUser);
-            StringBuilder stringBuilder = battle.finishBattle();
+            battle.finishBattle();
 
-            return stringBuilder.toString();
+            return battle;
         }
     }
 

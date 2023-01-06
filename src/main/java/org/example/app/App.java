@@ -3,6 +3,7 @@ package org.example.app;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
+import org.example.app.repositories.BattleRepository;
 import org.example.app.repositories.CardRepository;
 import org.example.app.repositories.UserRepository;
 import org.example.app.services.*;
@@ -54,6 +55,7 @@ public class App implements ServerApp {
             Connection connection = new DatabaseService().getConnection();
             UserRepository userRepository = new UserRepository(connection);
             CardRepository cardRepository = new CardRepository(connection);
+            BattleRepository battleRepository = new BattleRepository(connection);
 
 
             setCityController(new CityController(new CityService()));
@@ -70,7 +72,7 @@ public class App implements ServerApp {
 
             setStatController(new StatController(userService));
 
-            setBattleController(new BattleController(new BattleService()));
+            setBattleController(new BattleController(new BattleService(), battleRepository));
 
             setTradingController(new TradingController(tradingService, cardService));
 

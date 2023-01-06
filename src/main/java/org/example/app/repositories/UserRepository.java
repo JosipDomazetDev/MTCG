@@ -44,7 +44,7 @@ public class UserRepository implements Repository<User> {
 
 
     @Override
-    public void add(User user) {
+    public void insert(User user) {
         try (
                 PreparedStatement ps = createInsertStatement(user);
                 PreparedStatement psStat = createInsertStatStatement(user)
