@@ -52,4 +52,22 @@ public class TradeRepository implements Repository<Trade> {
     public void update(Trade trade) {
     }
 
+
+    private PreparedStatement createDeleteTradeStatement(String tradeId) throws SQLException {
+        String sql = "DELETE FROM trade WHERE id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, tradeId);
+        return ps;
+    }
+
+    public void delete(String tradeId) {
+        try (
+                PreparedStatement ps = createDeleteTradeStatement(tradeId);
+        ) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

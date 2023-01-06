@@ -88,6 +88,7 @@ public class TradingController extends Controller {
     public Response deleteTrade(User authenticatedUser, String tradeId) throws JsonProcessingException {
         try {
             tradingService.deleteTrade(tradeId, authenticatedUser);
+            tradeRepository.delete(tradeId);
 
             return new Response(
                     HttpStatus.OK,
