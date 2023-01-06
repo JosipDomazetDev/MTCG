@@ -73,8 +73,43 @@ public class PackageRepository implements Repository<Package> {
     }
 
 
-    @Override
-    public void update(Package aPackage) {
+    private PreparedStatement createUpdatePackageStatement(Package pack) throws SQLException {
+        String sql = "UPDATE package SET fk_userid=? WHERE id=?;";
 
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, pack.getUser().getId());
+        ps.setString(2, pack.getId());
+        return ps;
+    }
+
+    private PreparedStatement createUpdateCardStatement(Card card) throws SQLException {
+        String sql = "UPDATE card SET fk_ownerid=? WHERE id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+
+        ps.setString(1, card.getOwner().getId());
+        ps.setString(2, card.getId());
+        return ps;
+    }
+
+
+    @Override
+    public void update(Package pack) {
+        try (
+                PreparedStatement ps = createUpdatePackageStatement(pack);
+        ) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for (Card card : pack.getCards()) {
+            try (
+                    PreparedStatement psCards = createUpdateCardStatement(card)
+            ) {
+                psCards.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

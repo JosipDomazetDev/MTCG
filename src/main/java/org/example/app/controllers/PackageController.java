@@ -50,6 +50,8 @@ public class PackageController extends Controller {
         try {
             Package pack = cardService.buyPackage(authenticatedUser);
 
+            packageRepository.update(pack);
+
             return new Response(
                     HttpStatus.OK,
                     ContentType.JSON,
