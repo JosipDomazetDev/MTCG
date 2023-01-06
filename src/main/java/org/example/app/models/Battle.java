@@ -175,7 +175,7 @@ public class Battle {
         );
     }
 
-    public StringBuilder finishBattle() {
+    public synchronized void finishBattle() {
         battleLog.append("=====================================\n");
         battleLog.append(String.format("Let's Duel, %s [Elo: %d] vs. %s [Elo: %d]\n\n",
                 getPlayer1().getUsername(),
@@ -253,6 +253,5 @@ public class Battle {
         battleLog.append("\n=====================================\n");
 
 
-        return battleLog;
     }
 }

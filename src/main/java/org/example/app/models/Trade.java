@@ -77,7 +77,7 @@ public class Trade {
         this.user1 = authenticatedUser;
     }
 
-    public void complete(User authenticatedUser) {
+    public synchronized void complete(User authenticatedUser) {
         user2 = authenticatedUser;
     }
 

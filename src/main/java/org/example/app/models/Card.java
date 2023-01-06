@@ -151,7 +151,7 @@ public class Card {
         return elementType == ElementType.NORMAL;
     }
 
-    public void swapWith(Card offeredCard) {
+    public synchronized void swapWith(Card offeredCard) {
         User temp = getOwner();
         setOwner(offeredCard.getOwner());
         offeredCard.setOwner(temp);

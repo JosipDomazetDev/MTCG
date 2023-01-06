@@ -15,11 +15,9 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 public class TradingService {
-    @Setter(AccessLevel.PRIVATE)
-    private List<Trade> trades;
+    private final List<Trade> trades = Collections.synchronizedList(new ArrayList<>());
 
     public TradingService() {
-        setTrades(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public List<Trade> getTrades(User authenticatedUser, boolean belongsToMe) {
@@ -49,7 +47,9 @@ public class TradingService {
             throw new NotAvailableException();
         }
 
-        trades.add(trade);
+        synchronized (trades){
+            trades.add(trade);
+        }
     }
 
     public void deleteTrade(String tradeId, User authenticatedUser) throws NotAvailableException, ConflictException {
@@ -64,7 +64,9 @@ public class TradingService {
             throw new ConflictException();
         }
 
-        trades.remove(trade);
+        synchronized (trades){
+            trades.remove(trade);
+        }
     }
 
     public ArrayList<Object> performTrade(String tradeId, String cardId, List<Card> cardsFromUser, List<Card> cardsFromDeck, User authenticatedUser) throws NotAvailableException, ConflictException {
@@ -82,7 +84,8 @@ public class TradingService {
             throw new ConflictException();
         }
 
-        if (offeredCard.getDamage() < trade.getCard().getDamage() || trade.getCardType() != offeredCard.getCardType()) {
+        Card originalCard = trade.getCard();
+        if (offeredCard.getDamage() < originalCard.getDamage() || trade.getCardType() != offeredCard.getCardType()) {
             // The requirements are not met (Type, MinimumDamage)
             throw new ConflictException();
         }
@@ -93,16 +96,20 @@ public class TradingService {
             throw new ConflictException();
         }
 
-        if (Objects.equals(authenticatedUser.getId(), trade.getCard().getOwner().getId())) {
+        if (Objects.equals(authenticatedUser.getId(), originalCard.getOwner().getId())) {
             // The user tries to trade with self
             throw new ConflictException();
         }
 
-        trade.getCard().swapWith(offeredCard);
-        trade.complete(authenticatedUser);
+        synchronized (originalCard){
+            originalCard.swapWith(offeredCard);
+        }
+        synchronized (trade){
+            trade.complete(authenticatedUser);
+        }
 
         ArrayList<Object> ret = new ArrayList<>();
-        ret.add(trade.getCard());
+        ret.add(originalCard);
         ret.add(offeredCard);
         ret.add(trade);
         return ret;
