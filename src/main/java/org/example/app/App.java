@@ -2,6 +2,7 @@ package org.example.app;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
+import org.example.app.models.Card;
 import org.example.app.models.User;
 import org.example.app.repositories.BattleRepository;
 import org.example.app.repositories.CardRepository;
@@ -18,6 +19,7 @@ import org.example.server.ServerApp;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,7 +86,9 @@ public class App implements ServerApp {
             userController.loadAll();
             cardController.loadAll(userService.getUsers());
             battleController.loadAll(userService.getUsers());
-//            tradingController.loadAll();
+
+            List<Card> cards = cardService.getPackages().stream().flatMap(aPackage -> aPackage.getCards().stream()).toList();
+            tradingController.loadAll(userService.getUsers(), cards);
 
         } catch (SQLException e) {
             e.printStackTrace();

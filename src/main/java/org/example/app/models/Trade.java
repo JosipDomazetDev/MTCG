@@ -23,7 +23,7 @@ public class Trade {
     private CardType cardType;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-    private float minimumDamage;
+    private double minimumDamage;
 
     @JsonIgnore
     private Card card;
@@ -31,6 +31,22 @@ public class Trade {
     private User user1;
     @JsonIgnore
     private User user2;
+
+    public Trade(String id, Card card, String cardType, double minimumDamage, User user1, User user2) {
+        this.id = id;
+        this.cardToTrade = card.getId();
+        this.card = card;
+
+        if (cardType.contains(CardType.SPELL.toString())) {
+            this.cardType = CardType.SPELL;
+        } else if (cardType.contains(CardType.MONSTER.toString())) {
+            this.cardType = CardType.MONSTER;
+        }
+
+        this.minimumDamage = minimumDamage;
+        this.user1 = user1;
+        this.user2 = user2;
+    }
 
     @JsonProperty("type")
     private String getJsonType() {

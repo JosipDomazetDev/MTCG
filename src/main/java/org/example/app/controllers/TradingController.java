@@ -141,4 +141,9 @@ public class TradingController extends Controller {
             );
         }
     }
+
+    public void loadAll(List<User> users, List<Card> cards) {
+        List<Trade> tradeList = getTradeRepository().loadAll(users, cards);
+        getTradingService().getAllTrades().addAll(tradeList);
+    }
 }
