@@ -49,6 +49,7 @@ public class UserController extends Controller {
             );
         }
 
+        userRepository.putUser(user);
         String userJson = getObjectMapper().writeValueAsString(user);
 
         return new Response(

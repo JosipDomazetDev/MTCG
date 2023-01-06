@@ -10,13 +10,13 @@ drop table if exists "battle" CASCADE;
 
 create table if not exists "user"
 (
-    id           varchar not null PRIMARY KEY,
-    username     varchar not null,
-    passwordHash varchar not null,
+    id           varchar           not null PRIMARY KEY,
+    passwordHash varchar           not null,
     coins        integer,
-    name         varchar,
-    bio          varchar,
-    image        varchar
+    username     varchar COLLATE "C" not null,
+    name         varchar COLLATE "C",
+    bio          varchar COLLATE "C",
+    image        varchar COLLATE "C"
 );
 
 create unique index if not exists user_username_uindex
@@ -37,7 +37,7 @@ create table if not exists package
 create table if not exists card
 (
     id          varchar PRIMARY KEY,
-    name        varchar          not null,
+    name        varchar COLLATE "C" not null,
     damage      double precision not null,
     elementType varchar,
     cardType    varchar,
@@ -108,7 +108,7 @@ create table if not exists battle
     id            varchar PRIMARY KEY,
     fk_player1Id  varchar,
     fk_player2Id  varchar,
-    battleLog     varchar,
+    battleLog     varchar COLLATE "C",
     battleOutcome varchar,
     created_at    TIMESTAMP DEFAULT NOW(),
     CONSTRAINT fk_player1Id
@@ -140,4 +140,4 @@ create table if not exists trade
             ON DELETE CASCADE
 );
 INSERT INTO "user"(id, username, passwordHash, coins, name, bio, image)
-VALUES('josip','josip','josip',20, 'gkrkrg', 'drfrggr', 'fefrk');
+VALUES ('josip', 'josip', 'josip', 20, 'gkrkrg', 'drfrggr', 'fefrk');

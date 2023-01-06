@@ -44,6 +44,27 @@ public class UserRepository implements Repository {
         }
     }
 
+    private PreparedStatement createUpdateStatement(User user) throws SQLException {
+        String sql = "UPDATE \"user\" SET name=?, bio=?, image=? WHERE id = ?";
+
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, user.getName());
+        ps.setString(2, user.getBio());
+        ps.setString(3, user.getImage());
+        ps.setString(4, user.getId());
+        return ps;
+    }
+
+    public void putUser(User user) {
+        try (
+                PreparedStatement ps = createUpdateStatement(user)
+        ) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 //    public List<User> getUser(int userId) {
 //        try (
 //             PreparedStatement ps = createPreparedStatement( userId);
