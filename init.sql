@@ -10,8 +10,8 @@ drop table if exists "battle" CASCADE;
 
 create table if not exists "user"
 (
-    id           varchar           not null PRIMARY KEY,
-    passwordHash varchar           not null,
+    id           varchar             not null PRIMARY KEY,
+    passwordHash varchar             not null,
     coins        integer,
     username     varchar COLLATE "C" not null,
     name         varchar COLLATE "C",
@@ -38,7 +38,7 @@ create table if not exists card
 (
     id          varchar PRIMARY KEY,
     name        varchar COLLATE "C" not null,
-    damage      double precision not null,
+    damage      double precision    not null,
     elementType varchar,
     cardType    varchar,
     fk_ownerId  varchar,
@@ -53,6 +53,23 @@ create table if not exists card
             ON DELETE CASCADE
 );
 
+CREATE OR REPLACE FUNCTION check_package_card_limit()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    IF (SELECT COUNT(*) FROM card WHERE fk_packId = NEW.fk_packId) > 5 THEN
+        RAISE EXCEPTION 'A package can only contain 5 cards';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger
+CREATE TRIGGER check_package_card_limit
+    BEFORE INSERT
+    ON card
+    FOR EACH ROW
+EXECUTE PROCEDURE check_package_card_limit();
 
 
 create table if not exists deck

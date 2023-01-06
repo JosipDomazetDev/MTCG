@@ -3,7 +3,7 @@ package org.example.app;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.User;
-import org.example.app.repositories.PackageRepository;
+import org.example.app.repositories.CardRepository;
 import org.example.app.repositories.UserRepository;
 import org.example.app.services.*;
 import org.example.http.ContentType;
@@ -53,7 +53,7 @@ public class App implements ServerApp {
         try {
             Connection connection = new DatabaseService().getConnection();
             UserRepository userRepository = new UserRepository(connection);
-            PackageRepository packageRepository = new PackageRepository(connection);
+            CardRepository cardRepository = new CardRepository(connection);
 
 
             setCityController(new CityController(new CityService()));
@@ -65,8 +65,8 @@ public class App implements ServerApp {
             CardService cardService = new CardService();
             TradingService tradingService = new TradingService();
 
-            setPackageController(new PackageController(cardService, packageRepository));
-            setCardController(new CardController(cardService, tradingService));
+            setPackageController(new PackageController(cardService, cardRepository));
+            setCardController(new CardController(cardService, tradingService, cardRepository));
 
             setStatController(new StatController(userService));
 
@@ -138,8 +138,6 @@ public class App implements ServerApp {
                         return this.sessionController.login(request);
                     }
 
-                    // ============================ Authenticated Paths ============================
-
                     if (!isAuthenticated) {
                         return this.errorController.sendUnauthorized(request);
                     }
@@ -161,6 +159,10 @@ public class App implements ServerApp {
                     }
                 }
                 case PUT: {
+                    if (!isAuthenticated) {
+                        return this.errorController.sendUnauthorized(request);
+                    }
+
                     String matchesUserPath = matchesRootPath("users", request);
 
                     if (matchesUserPath != null) {
@@ -177,6 +179,10 @@ public class App implements ServerApp {
                     }
                 }
                 case DELETE:
+                    if (!isAuthenticated) {
+                        return this.errorController.sendUnauthorized(request);
+                    }
+
                     String matchesTradingsPath = matchesRootPath("tradings", request);
 
                     if (matchesTradingsPath != null) {

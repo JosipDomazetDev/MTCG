@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.User;
+import org.example.app.repositories.CardRepository;
 import org.example.app.services.CardService;
 import org.example.app.services.TradingService;
 import org.example.app.services.exceptions.NotAvailableException;
@@ -28,9 +29,14 @@ public class CardController extends Controller {
     @Getter(AccessLevel.PRIVATE)
     private TradingService tradingService;
 
-    public CardController(CardService cardService, TradingService tradingService) {
+    @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PRIVATE)
+    private CardRepository CardRepository;
+
+    public CardController(CardService cardService, TradingService tradingService, CardRepository cardRepository) {
         setCardService(cardService);
         setTradingService(tradingService);
+        setCardRepository(cardRepository);
     }
 
     public Response getCards(User authenticatedUser) throws JsonProcessingException {
@@ -97,6 +103,8 @@ public class CardController extends Controller {
                     "{ \"error\": \"At least one of the provided cards does not belong to the user or is not available.\"}"
             );
         }
+
+        getCardRepository().updateDeck(authenticatedUser.getDeck());
 
         return new Response(
                 HttpStatus.OK,

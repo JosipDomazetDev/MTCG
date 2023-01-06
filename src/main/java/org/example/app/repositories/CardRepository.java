@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Card;
+import org.example.app.models.Deck;
 import org.example.app.models.Package;
 
 import java.sql.Connection;
@@ -12,13 +13,13 @@ import java.sql.SQLException;
 
 @Setter
 @Getter
-public class PackageRepository implements Repository<Package> {
+public class CardRepository implements Repository<Package> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     Connection connection;
     private String id;
 
-    public PackageRepository(Connection connection) {
+    public CardRepository(Connection connection) {
         setConnection(connection);
     }
 
@@ -59,6 +60,7 @@ public class PackageRepository implements Repository<Package> {
             ps.execute();
         } catch (SQLException e) {
             e.printStackTrace();
+            return;
         }
 
         for (Card card : pack.getCards()) {
@@ -100,6 +102,7 @@ public class PackageRepository implements Repository<Package> {
             ps.execute();
         } catch (SQLException e) {
             e.printStackTrace();
+            return;
         }
 
         for (Card card : pack.getCards()) {
@@ -112,4 +115,47 @@ public class PackageRepository implements Repository<Package> {
             }
         }
     }
+
+    private PreparedStatement createDeleteDeckStatement(Deck deck) throws SQLException {
+        String sql = "DELETE FROM deck WHERE fk_userid = ?";
+        PreparedStatement ps = connection.prepareStatement(sql);
+
+        ps.setString(1, deck.getUser().getId());
+        return ps;
+    }
+
+    private PreparedStatement createInsertDeckStatement(Deck deck, Card card) throws SQLException {
+        String sql = "INSERT INTO deck(fk_userid, fk_cardid) " +
+                "VALUES (?,?);";
+        PreparedStatement ps = connection.prepareStatement(sql);
+
+        ps.setString(1, deck.getUser().getId());
+        ps.setString(2, card.getId());
+        return ps;
+    }
+
+    public void updateDeck(Deck deck) {
+
+        try (
+                PreparedStatement psDelete = createDeleteDeckStatement(deck);
+        ) {
+            psDelete.execute();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for (Card card : deck.getCards()) {
+            try (
+                    PreparedStatement ps = createInsertDeckStatement(deck, card);
+            ) {
+                ps.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
 }

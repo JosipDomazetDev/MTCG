@@ -34,13 +34,24 @@ public class UserRepository implements Repository<User> {
         return ps;
     }
 
+    private PreparedStatement createInsertStatStatement(User user) throws SQLException {
+        String sql = "INSERT INTO stat(fk_userid) " +
+                "VALUES(?);";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, user.getId());
+        return ps;
+    }
+
 
     @Override
     public void add(User user) {
         try (
-                PreparedStatement ps = createInsertStatement(user)
+                PreparedStatement ps = createInsertStatement(user);
+                PreparedStatement psStat = createInsertStatStatement(user)
         ) {
-            ps.execute();
+            if (ps.execute()) {
+                psStat.execute();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
