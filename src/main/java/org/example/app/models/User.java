@@ -86,7 +86,7 @@ public class User {
     }
 
 
-    public void buyPackage(Package packageToBeBought) throws NoMoneyException {
+    public synchronized void buyPackage(Package packageToBeBought) throws NoMoneyException {
         if (packageToBeBought.getPrice() > coins) {
             throw new NoMoneyException();
         }
@@ -95,8 +95,10 @@ public class User {
         setCoins(getCoins() - packageToBeBought.getPrice());
 
         for (Card card : packageToBeBought.getCards()) {
-            // Set the new owner
-            card.setOwner(this);
+            synchronized (card){
+                // Set the new owner
+                card.setOwner(this);
+            }
         }
     }
 

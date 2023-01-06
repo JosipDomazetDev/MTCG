@@ -2,7 +2,6 @@ package org.example.app.services;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Package;
 import org.example.app.models.Trade;
@@ -18,12 +17,11 @@ import java.util.List;
 import java.util.Objects;
 
 public class CardService {
-    @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PUBLIC)
-    private List<Package> packages;
+    private final List<Package> packages = Collections.synchronizedList(new ArrayList<>());
 
     public CardService() {
-        setPackages(Collections.synchronizedList(new ArrayList<>()));
+
     }
 
     public Package createPackageWithCards(ArrayList<Card> cards, User authenticatedUser) throws ConflictException {
@@ -36,7 +34,9 @@ public class CardService {
         }
 
         Package pack = new Package(cards);
-        packages.add(pack);
+        synchronized (packages) {
+            packages.add(pack);
+        }
         return pack;
     }
 
@@ -48,7 +48,9 @@ public class CardService {
         }
 
         Package packageToBeBought = unsoldPackages.get(0);
-        authenticatedUser.buyPackage(packageToBeBought);
+        synchronized (packageToBeBought){
+            authenticatedUser.buyPackage(packageToBeBought);
+        }
 
         return packageToBeBought;
     }
@@ -84,6 +86,10 @@ public class CardService {
             throw new NotAvailableException();
         }
 
-        authenticatedUser.getDeck().setCards(cards);
+        List<Card> deckCards = authenticatedUser.getDeck().getCards();
+        synchronized (deckCards){
+            deckCards.clear();
+            deckCards.addAll(cards);
+        }
     }
 }
