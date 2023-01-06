@@ -49,8 +49,7 @@ public class PackageController extends Controller {
     public Response buyPackage(User authenticatedUser) throws JsonProcessingException {
         try {
             Package pack = cardService.buyPackage(authenticatedUser);
-
-            cardRepository.update(pack);
+            cardRepository.update(pack, authenticatedUser);
 
             return new Response(
                     HttpStatus.OK,

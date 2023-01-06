@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Deck;
 import org.example.app.models.Package;
+import org.example.app.models.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -92,7 +93,6 @@ public class CardRepository implements Repository<Package> {
         return ps;
     }
 
-
     @Override
     public void update(Package pack) {
         try (
@@ -112,6 +112,28 @@ public class CardRepository implements Repository<Package> {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+
+    private PreparedStatement createUpdateCoinsStatement(User authenticatedUser) throws SQLException {
+        String sql = "UPDATE \"user\" SET coins=? WHERE id=?;";
+        PreparedStatement ps = connection.prepareStatement(sql);
+
+        ps.setInt(1, authenticatedUser.getCoins());
+        ps.setString(2, authenticatedUser.getId());
+        return ps;
+    }
+
+    public void update(Package pack, User authenticatedUser) {
+        update(pack);
+
+        try (
+                PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser);
+        ) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
