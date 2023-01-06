@@ -2,7 +2,6 @@ package org.example.app.services;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import org.example.app.models.Battle;
 import org.example.app.models.User;
 import org.example.app.services.exceptions.ConflictException;
@@ -13,31 +12,34 @@ import java.util.List;
 import java.util.Objects;
 
 public class BattleService {
-    @Setter(AccessLevel.PRIVATE)
     @Getter(AccessLevel.PUBLIC)
-    private List<Battle> battles;
+    private final List<Battle> battles = Collections.synchronizedList(new ArrayList<>());
 
     public BattleService() {
-        setBattles(Collections.synchronizedList(new ArrayList<>()));
     }
 
     public Battle createOrStartBattle(User authenticatedUser) throws ConflictException {
+
         List<Battle> freeBattles = getFreeBattles();
         Battle battle;
 
         if (freeBattles.isEmpty()) {
             // Create new Battle
             battle = new Battle(authenticatedUser);
-            battles.add(battle);
+            synchronized (battles) {
+                battles.add(battle);
+            }
         } else {
             battle = freeBattles.get(0);
-            battle.setPlayer2(authenticatedUser);
+            synchronized (battle) {
+                battle.setPlayer2(authenticatedUser);
 
-            if (Objects.equals(battle.getPlayer1().getId(), battle.getPlayer2().getId())) {
-                throw new ConflictException();
+                if (Objects.equals(battle.getPlayer1().getId(), battle.getPlayer2().getId())) {
+                    throw new ConflictException();
+                }
+
+                battle.finishBattle();
             }
-
-            battle.finishBattle();
         }
 
         return battle;
@@ -48,6 +50,10 @@ public class BattleService {
     }
 
     public void dismantleBattle(Battle battle) {
-        battles.remove(battle);
+        synchronized (battles) {
+            synchronized (battle) {
+                battles.remove(battle);
+            }
+        }
     }
 }
