@@ -15,6 +15,10 @@ public class Response {
     private String contentType;
     private String content;
 
+    public int getStatusCode() {
+        return statusCode;
+    }
+
     public Response(HttpStatus httpStatus, ContentType contentType, String content) {
         setStatusCode(httpStatus.getCode());
         setContentType(contentType.getType());

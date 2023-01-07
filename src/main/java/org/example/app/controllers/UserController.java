@@ -10,7 +10,6 @@ import org.example.app.repositories.UserRepository;
 import org.example.app.services.UserService;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
-import org.example.server.Request;
 import org.example.server.Response;
 
 import java.util.List;
@@ -30,7 +29,7 @@ public class UserController extends Controller {
         setUserRepository(userRepository);
     }
 
-    public Response putUser(Request request, String username, User authenticatedUser) throws JsonProcessingException {
+    public Response putUser(String requestBody, String username, User authenticatedUser) throws JsonProcessingException {
         if (checkGivenUsernameIsntAuthenticatedUsername(username, authenticatedUser)) {
             return new Response(
                     HttpStatus.NOT_FOUND,
@@ -39,7 +38,7 @@ public class UserController extends Controller {
             );
         }
 
-        JsonNode rootNode = getObjectMapper().readTree(request.getBody());
+        JsonNode rootNode = getObjectMapper().readTree(requestBody);
         User user = getUserService().putUser(username, rootNode);
 
         if (user == null) {
@@ -94,8 +93,8 @@ public class UserController extends Controller {
 
 
     // POST /cities
-    public Response createUser(Request request) throws JsonProcessingException {
-        User user = getObjectMapper().readValue(request.getBody(), User.class);
+    public Response createUser(String requestBody) throws JsonProcessingException {
+        User user = getObjectMapper().readValue(requestBody, User.class);
         boolean isUserAdded = getUserService().addUser(user);
 
         if (!isUserAdded) {

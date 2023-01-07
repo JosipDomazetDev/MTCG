@@ -128,7 +128,7 @@ public class App implements ServerApp {
                 }
                 case POST -> {
                     if (request.getPathname().equals("/users")) {
-                        return this.userController.createUser(request);
+                        return this.userController.createUser(request.getBody());
                     }
                     if (request.getPathname().equals("/sessions")) {
                         return this.sessionController.login(request);
@@ -165,7 +165,7 @@ public class App implements ServerApp {
                     String matchesUserPath = matchesRootPath("users", request);
 
                     if (matchesUserPath != null) {
-                        return this.userController.putUser(request, matchesUserPath, authenticatedUser);
+                        return this.userController.putUser(request.getBody(), matchesUserPath, authenticatedUser);
                     }
                     if (request.getPathname().equals("/decks")) {
                         return this.cardController.putCardsIntoDeck(request, authenticatedUser);

@@ -157,4 +157,5 @@ create table if not exists trade
             ON DELETE CASCADE
 );
 
-SELECT * FROM pg_stat_activity;
+SELECT *
+FROM pg_stat_activity;

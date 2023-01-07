@@ -89,6 +89,7 @@ public class Card {
     public static final String WATER_SPELL = "WaterSpell";
     public static final String KRAKEN = "Kraken";
     public static final String FIRE_ELF = "FireElf";
+    public static final String ELF = "Elf";
 
     @JsonIgnore
     public boolean isDragon() {
@@ -129,6 +130,11 @@ public class Card {
     @JsonIgnore
     public boolean isFireElf() {
         return name.contains(FIRE_ELF);
+    }
+
+    @JsonIgnore
+    public boolean isElf() {
+        return name.contains(ELF);
     }
 
     @JsonIgnore
