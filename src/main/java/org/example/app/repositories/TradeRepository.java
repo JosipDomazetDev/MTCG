@@ -3,10 +3,10 @@ package org.example.app.repositories;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.app.models.Battle;
 import org.example.app.models.Card;
 import org.example.app.models.Trade;
 import org.example.app.models.User;
+import org.example.app.services.ConnectionPool;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,14 +21,14 @@ import java.util.Objects;
 public class TradeRepository implements Repository<Trade> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
-    Connection connection;
+    ConnectionPool connectionPool;
 
-    public TradeRepository(Connection connection) {
-        setConnection(connection);
+    public TradeRepository(ConnectionPool connectionPool) {
+        setConnectionPool(connectionPool);
     }
 
 
-    private PreparedStatement createInsertTradeStatement(Trade trade) throws SQLException {
+    private PreparedStatement createInsertTradeStatement(Trade trade, Connection connection) throws SQLException {
         String sql = "INSERT INTO trade(id, fk_cardtotradeid, cardtype, minimumdamage, fk_user1id, fk_user2id) VALUES " +
                 "(?,?,?,?,?,?)";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -47,11 +47,15 @@ public class TradeRepository implements Repository<Trade> {
     @Override
     public void insert(Trade trade) {
         try (
-                PreparedStatement ps = createInsertTradeStatement(trade);
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement ps = createInsertTradeStatement(trade, connection);
         ) {
             ps.execute();
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -60,7 +64,7 @@ public class TradeRepository implements Repository<Trade> {
     }
 
 
-    private PreparedStatement createDeleteTradeStatement(String tradeId) throws SQLException {
+    private PreparedStatement createDeleteTradeStatement(String tradeId, Connection connection) throws SQLException {
         String sql = "DELETE FROM trade WHERE id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, tradeId);
@@ -69,15 +73,19 @@ public class TradeRepository implements Repository<Trade> {
 
     public void delete(String tradeId) {
         try (
-                PreparedStatement ps = createDeleteTradeStatement(tradeId);
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement ps = createDeleteTradeStatement(tradeId, connection);
         ) {
             ps.execute();
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private PreparedStatement createUpdateCardOwnerStatement(Card card) throws SQLException {
+    private PreparedStatement createUpdateCardOwnerStatement(Card card, Connection connection) throws SQLException {
         String sql = "UPDATE card SET fk_ownerid=? WHERE id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, card.getOwner().getId());
@@ -86,7 +94,7 @@ public class TradeRepository implements Repository<Trade> {
         return ps;
     }
 
-    private PreparedStatement createUpdateTradeStatement(Trade trade) throws SQLException {
+    private PreparedStatement createUpdateTradeStatement(Trade trade, Connection connection) throws SQLException {
         String sql = "UPDATE trade SET fk_user2id=? WHERE id=?;";
 
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -102,19 +110,24 @@ public class TradeRepository implements Repository<Trade> {
         Trade trade = (Trade) result.get(2);
 
         try (
-                PreparedStatement ps1 = createUpdateCardOwnerStatement(card);
-                PreparedStatement ps2 = createUpdateCardOwnerStatement(offeredCard);
-                PreparedStatement psTrade = createUpdateTradeStatement(trade);
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement ps1 = createUpdateCardOwnerStatement(card, connection);
+                PreparedStatement ps2 = createUpdateCardOwnerStatement(offeredCard, connection);
+                PreparedStatement psTrade = createUpdateTradeStatement(trade, connection);
         ) {
             ps1.execute();
             ps2.execute();
             psTrade.execute();
+
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private PreparedStatement createSelectTradesStatement() throws SQLException {
+    private PreparedStatement createSelectTradesStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, fk_cardtotradeid, cardtype, minimumdamage, fk_user1id, fk_user2id FROM trade;";
         return connection.prepareStatement(sql);
     }
@@ -123,7 +136,8 @@ public class TradeRepository implements Repository<Trade> {
         List<Trade> trades = new ArrayList<>();
 
         try (
-                PreparedStatement selectTradesStatement = createSelectTradesStatement();
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement selectTradesStatement = createSelectTradesStatement(connection);
                 ResultSet rsTrades = selectTradesStatement.executeQuery();
         ) {
             while (rsTrades.next()) {
@@ -153,9 +167,11 @@ public class TradeRepository implements Repository<Trade> {
                 trades.add(trade);
             }
 
-
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         return trades;

@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.app.App;
+import org.example.app.services.ConnectionPool;
 
 import java.io.BufferedReader;
 import java.io.IOException;

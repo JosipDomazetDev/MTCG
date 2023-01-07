@@ -4,9 +4,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Battle;
-import org.example.app.models.Card;
-import org.example.app.models.Package;
 import org.example.app.models.User;
+import org.example.app.services.ConnectionPool;
+import org.example.app.services.DatabaseService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,14 +21,14 @@ import java.util.Objects;
 public class BattleRepository implements Repository<Battle> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
-    Connection connection;
+    ConnectionPool connectionPool;
 
-    public BattleRepository(Connection connection) {
-        setConnection(connection);
+    public BattleRepository(ConnectionPool connectionPool) {
+        setConnectionPool(connectionPool);
     }
 
 
-    private PreparedStatement createInsertBattleStatement(Battle battle) throws SQLException {
+    private PreparedStatement createInsertBattleStatement(Battle battle, Connection connection) throws SQLException {
         String sql = "INSERT INTO battle(id, fk_player1id, fk_player2id, battlelog, battleoutcome) VALUES " + "(?,?,?,?,?);";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, battle.getId());
@@ -42,25 +42,32 @@ public class BattleRepository implements Repository<Battle> {
 
     @Override
     public void insert(Battle battle) {
-        try (PreparedStatement ps = createInsertBattleStatement(battle);) {
-            ps.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return;
-        }
+        try {
+            Connection connection = connectionPool.getConnection();
+            DatabaseService.executeTransaction(connection, () -> {
+                try (PreparedStatement ps = createInsertBattleStatement(battle, connection);) {
+                    ps.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return;
+                }
 
-        try (PreparedStatement ps1 = createUpdateStatsStatement(battle.getPlayer1());
-             PreparedStatement ps2 = createUpdateStatsStatement(battle.getPlayer2())
-
-        ) {
-            ps1.execute();
-            ps2.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
+                try (PreparedStatement ps1 = createUpdateStatsStatement(battle.getPlayer1(), connection);
+                     PreparedStatement ps2 = createUpdateStatsStatement(battle.getPlayer2(), connection)
+                ) {
+                    ps1.execute();
+                    ps2.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+            connectionPool.releaseConnection(connection);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private PreparedStatement createUpdateStatsStatement(User user) throws SQLException {
+    private PreparedStatement createUpdateStatsStatement(User user, Connection connection) throws SQLException {
         String sql = "UPDATE stat SET elo=?, wins=?,draws=?, total=? WHERE fk_userid=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setInt(1, user.getStat().getElo());
@@ -76,7 +83,7 @@ public class BattleRepository implements Repository<Battle> {
     public void update(Battle battle) {
     }
 
-    private PreparedStatement createSelectBattleStatement() throws SQLException {
+    private PreparedStatement createSelectBattleStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, fk_player1id, fk_player2id, battlelog, battleoutcome, created_at  FROM battle";
         return connection.prepareStatement(sql);
     }
@@ -85,7 +92,8 @@ public class BattleRepository implements Repository<Battle> {
         List<Battle> battles = new ArrayList<>();
 
         try (
-                PreparedStatement battleStatement = createSelectBattleStatement();
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement battleStatement = createSelectBattleStatement(connection);
                 ResultSet rsBattles = battleStatement.executeQuery();
         ) {
             while (rsBattles.next()) {
@@ -106,11 +114,11 @@ public class BattleRepository implements Repository<Battle> {
                 Battle battle = new Battle(id, player1, player2, battleLog, battleOutcome);
                 battles.add(battle);
             }
-
-
-
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         return battles;

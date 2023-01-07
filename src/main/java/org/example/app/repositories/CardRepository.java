@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.*;
 import org.example.app.models.Package;
+import org.example.app.services.ConnectionPool;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,14 +20,14 @@ import java.util.Objects;
 public class CardRepository implements Repository<Package> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
-    Connection connection;
+    ConnectionPool connectionPool;
 
-    public CardRepository(Connection connection) {
-        setConnection(connection);
+    public CardRepository(ConnectionPool connectionPool) {
+        setConnectionPool(connectionPool);
     }
 
 
-    private PreparedStatement createInsertPackageStatement(Package pack) throws SQLException {
+    private PreparedStatement createInsertPackageStatement(Package pack, Connection connection) throws SQLException {
         String sql = "INSERT INTO package(id, price, fk_userid)\n" +
                 "VALUES(?, ?, ?);";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -37,7 +38,7 @@ public class CardRepository implements Repository<Package> {
         return ps;
     }
 
-    private PreparedStatement createInsertCardsStatement(Card card) throws SQLException {
+    private PreparedStatement createInsertCardsStatement(Card card, Connection connection) throws SQLException {
         String sql = "INSERT INTO card(id, name, damage, elementtype, cardtype, fk_ownerid, fk_packid) " +
                 "VALUES(?, ?, ?, ?, ?, ?, ?);";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -56,28 +57,37 @@ public class CardRepository implements Repository<Package> {
 
     @Override
     public void insert(Package pack) {
-        try (
-                PreparedStatement ps = createInsertPackageStatement(pack)
-        ) {
-            ps.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return;
-        }
+        try {
+            Connection connection = connectionPool.getConnection();
 
-        for (Card card : pack.getCards()) {
             try (
-                    PreparedStatement psCards = createInsertCardsStatement(card)
+                    PreparedStatement ps = createInsertPackageStatement(pack, connection)
             ) {
-                psCards.execute();
+                ps.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
+                return;
             }
+
+            for (Card card : pack.getCards()) {
+                try (
+                        PreparedStatement psCards = createInsertCardsStatement(card, connection)
+                ) {
+                    psCards.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            connectionPool.releaseConnection(connection);
+        } catch (InterruptedException ignored) {
+
         }
+
     }
 
 
-    private PreparedStatement createUpdatePackageStatement(Package pack) throws SQLException {
+    private PreparedStatement createUpdatePackageStatement(Package pack, Connection connection) throws SQLException {
         String sql = "UPDATE package SET fk_userid=? WHERE id=?;";
 
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -86,7 +96,7 @@ public class CardRepository implements Repository<Package> {
         return ps;
     }
 
-    private PreparedStatement createUpdateCardStatement(Card card) throws SQLException {
+    private PreparedStatement createUpdateCardStatement(Card card, Connection connection) throws SQLException {
         String sql = "UPDATE card SET fk_ownerid=? WHERE id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
 
@@ -97,28 +107,37 @@ public class CardRepository implements Repository<Package> {
 
     @Override
     public void update(Package pack) {
-        try (
-                PreparedStatement ps = createUpdatePackageStatement(pack)
-        ) {
-            ps.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return;
-        }
+        try {
+            Connection connection = connectionPool.getConnection();
 
-        for (Card card : pack.getCards()) {
+
             try (
-                    PreparedStatement psCards = createUpdateCardStatement(card)
+                    PreparedStatement ps = createUpdatePackageStatement(pack, connection)
             ) {
-                psCards.execute();
+                ps.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
+                return;
             }
+
+            for (Card card : pack.getCards()) {
+                try (
+                        PreparedStatement psCards = createUpdateCardStatement(card, connection)
+                ) {
+                    psCards.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            connectionPool.releaseConnection(connection);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
 
-    private PreparedStatement createUpdateCoinsStatement(User authenticatedUser) throws SQLException {
+    private PreparedStatement createUpdateCoinsStatement(User authenticatedUser, Connection connection) throws SQLException {
         String sql = "UPDATE \"user\" SET coins=? WHERE id=?;";
         PreparedStatement ps = connection.prepareStatement(sql);
 
@@ -131,15 +150,19 @@ public class CardRepository implements Repository<Package> {
         update(pack);
 
         try (
-                PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser)
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser, connection)
         ) {
             ps.execute();
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private PreparedStatement createDeleteDeckStatement(Deck deck) throws SQLException {
+    private PreparedStatement createDeleteDeckStatement(Deck deck, Connection connection) throws SQLException {
         String sql = "DELETE FROM deck WHERE fk_userid = ?";
         PreparedStatement ps = connection.prepareStatement(sql);
 
@@ -147,7 +170,7 @@ public class CardRepository implements Repository<Package> {
         return ps;
     }
 
-    private PreparedStatement createInsertDeckStatement(Deck deck, Card card) throws SQLException {
+    private PreparedStatement createInsertDeckStatement(Deck deck, Card card, Connection connection) throws SQLException {
         String sql = "INSERT INTO deck(fk_userid, fk_cardid) " +
                 "VALUES (?,?);";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -159,38 +182,46 @@ public class CardRepository implements Repository<Package> {
 
     public void updateDeck(Deck deck) {
 
-        try (
-                PreparedStatement psDelete = createDeleteDeckStatement(deck)
-        ) {
-            psDelete.execute();
+        try {
+            Connection connection = connectionPool.getConnection();
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        for (Card card : deck.getCards()) {
             try (
-                    PreparedStatement ps = createInsertDeckStatement(deck, card)
+                    PreparedStatement psDelete = createDeleteDeckStatement(deck, connection)
             ) {
-                ps.execute();
+                psDelete.execute();
+
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+
+            for (Card card : deck.getCards()) {
+                try (
+                        PreparedStatement ps = createInsertDeckStatement(deck, card, connection)
+                ) {
+                    ps.execute();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            connectionPool.releaseConnection(connection);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
     }
 
-    private PreparedStatement createSelectCardStatement() throws SQLException {
+    private PreparedStatement createSelectCardStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, name, damage, elementtype, cardtype, fk_ownerid, fk_packid FROM card;";
         return connection.prepareStatement(sql);
     }
 
-    private PreparedStatement createSelectPackStatement() throws SQLException {
+    private PreparedStatement createSelectPackStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, price, fk_userid FROM package";
         return connection.prepareStatement(sql);
     }
 
-    private PreparedStatement createSelectDeckStatement() throws SQLException {
+    private PreparedStatement createSelectDeckStatement(Connection connection) throws SQLException {
         String sql = "SELECT fk_userid, fk_cardid  FROM deck";
         return connection.prepareStatement(sql);
     }
@@ -199,9 +230,10 @@ public class CardRepository implements Repository<Package> {
         List<Card> cards = new ArrayList<>();
         List<Package> packs = new ArrayList<>();
         try (
-                PreparedStatement cardStatement = createSelectCardStatement();
-                PreparedStatement packStatement = createSelectPackStatement();
-                PreparedStatement deckStatement = createSelectDeckStatement();
+                Connection connection = connectionPool.getConnection();
+                PreparedStatement cardStatement = createSelectCardStatement(connection);
+                PreparedStatement packStatement = createSelectPackStatement(connection);
+                PreparedStatement deckStatement = createSelectDeckStatement(connection);
                 ResultSet rsCards = cardStatement.executeQuery();
                 ResultSet rsPacks = packStatement.executeQuery();
                 ResultSet rsDecks = deckStatement.executeQuery()
@@ -264,8 +296,11 @@ public class CardRepository implements Repository<Package> {
                 }
             }
 
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         return packs;

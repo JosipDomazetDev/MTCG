@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Stat;
 import org.example.app.models.User;
+import org.example.app.services.ConnectionPool;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,14 +17,14 @@ import java.util.Objects;
 public class UserRepository implements Repository<User> {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
-    Connection connection;
+    ConnectionPool connectionPool;
 
-    public UserRepository(Connection connection) {
-        setConnection(connection);
+    public UserRepository(ConnectionPool connectionPool) {
+        setConnectionPool(connectionPool);
     }
 
 
-    private PreparedStatement createInsertStatement(User user) throws SQLException {
+    private PreparedStatement createInsertStatement(User user, Connection connection) throws SQLException {
         String sql = "INSERT INTO \"user\"(id, username, passwordHash, coins, name, bio, image)\n" +
                 "VALUES(?, ?, ?, ?, ?, ?, ?);";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -37,7 +38,7 @@ public class UserRepository implements Repository<User> {
         return ps;
     }
 
-    private PreparedStatement createInsertStatStatement(User user) throws SQLException {
+    private PreparedStatement createInsertStatStatement(User user, Connection connection) throws SQLException {
         String sql = "INSERT INTO stat(fk_userid) " +
                 "VALUES(?);";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -49,17 +50,21 @@ public class UserRepository implements Repository<User> {
     @Override
     public void insert(User user) {
         try (
-                PreparedStatement ps = createInsertStatement(user);
-                PreparedStatement psStat = createInsertStatStatement(user)
+                Connection connection = getConnectionPool().getConnection();
+                PreparedStatement ps = createInsertStatement(user, connection);
+                PreparedStatement psStat = createInsertStatStatement(user, connection)
         ) {
             ps.execute();
             psStat.execute();
+            getConnectionPool().releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private PreparedStatement createUpdateStatement(User user) throws SQLException {
+    private PreparedStatement createUpdateStatement(User user, Connection connection) throws SQLException {
         String sql = "UPDATE \"user\" SET name=?, bio=?, image=? WHERE id = ?";
 
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -73,10 +78,12 @@ public class UserRepository implements Repository<User> {
     @Override
     public void update(User user) {
         try (
-                PreparedStatement ps = createUpdateStatement(user)
+                Connection connection = getConnectionPool().getConnection();
+                PreparedStatement ps = createUpdateStatement(user, connection)
         ) {
             ps.execute();
-        } catch (SQLException e) {
+            connectionPool.releaseConnection(connection);
+        } catch (SQLException | InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -85,11 +92,11 @@ public class UserRepository implements Repository<User> {
         List<User> users = new ArrayList<>();
         List<Stat> stats = new ArrayList<>();
         try (
-                PreparedStatement ps = createSelectUserStatement();
-                PreparedStatement psStats = createSelectStatStatement();
+                Connection connection = getConnectionPool().getConnection();
+                PreparedStatement ps = createSelectUserStatement(connection);
+                PreparedStatement psStats = createSelectStatStatement(connection);
                 ResultSet rsUsers = ps.executeQuery();
-                ResultSet rsStats = psStats.executeQuery()
-
+                ResultSet rsStats = psStats.executeQuery();
         ) {
             while (rsStats.next()) {
                 String fkUserId = rsStats.getString(1);
@@ -117,20 +124,22 @@ public class UserRepository implements Repository<User> {
                 users.add(user);
             }
 
-
+            connectionPool.releaseConnection(connection);
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         return users;
     }
 
-    private PreparedStatement createSelectUserStatement() throws SQLException {
+    private PreparedStatement createSelectUserStatement(Connection connection) throws SQLException {
         String sql = "SELECT id,passwordhash,coins,username,name,bio,image FROM \"user\";";
         return connection.prepareStatement(sql);
     }
 
-    private PreparedStatement createSelectStatStatement() throws SQLException {
+    private PreparedStatement createSelectStatStatement(Connection connection) throws SQLException {
         String sql = "SELECT fk_userid, elo, wins, draws, total FROM stat";
         return connection.prepareStatement(sql);
     }

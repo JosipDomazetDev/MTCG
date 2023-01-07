@@ -48,13 +48,13 @@ public class App implements ServerApp {
     @Setter(AccessLevel.PRIVATE)
     private TradingController tradingController;
 
+    private static final ConnectionPool pool = new ConnectionPool();
     public App() {
         try {
-            Connection connection = new DatabaseService().getConnection();
-            UserRepository userRepository = new UserRepository(connection);
-            CardRepository cardRepository = new CardRepository(connection);
-            BattleRepository battleRepository = new BattleRepository(connection);
-            TradeRepository tradeRepository = new TradeRepository(connection);
+            UserRepository userRepository = new UserRepository(pool);
+            CardRepository cardRepository = new CardRepository(pool);
+            BattleRepository battleRepository = new BattleRepository(pool);
+            TradeRepository tradeRepository = new TradeRepository(pool);
 
 
             UserService userService = new UserService();
@@ -81,20 +81,15 @@ public class App implements ServerApp {
             List<Card> cards = cardService.getPackages().stream().flatMap(aPackage -> aPackage.getCards().stream()).toList();
             tradingController.loadAll(userService.getUsers(), cards);
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } finally {
+
         }
 
     }
 
     public Response handleRequest(Request request) throws SQLException {
         System.out.println("Request handled by Thread: " + currentThread().getName());
-        Response response = new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "Server failed.");
-
-        try {
-            response = route(request);
-        } catch (Exception e) {
-        }
+        Response response = route(request);
 
         return response;
     }
