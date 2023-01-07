@@ -1,8 +1,5 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.example.app.controllers.CardController;
-import org.example.app.controllers.PackageController;
-import org.example.app.controllers.SessionController;
-import org.example.app.controllers.UserController;
+import org.example.app.controllers.*;
 import org.example.app.models.*;
 import org.example.app.models.Package;
 import org.example.app.repositories.CardRepository;
@@ -132,6 +129,9 @@ public class ControllerTest {
     @Order(3)
     void testCardController() throws JsonProcessingException {
         CardController cardController = new CardController(cardService, tradingService, cardRepositorySpy);
+        assertEquals(200, cardController.getCards(authenticatedUser).getStatusCode());
+        // Should own 20 cards
+        assertEquals(20, cardService.getCardsFromUser(authenticatedUser).size());
 
         String d = "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
         String dWrongLength = "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
@@ -166,4 +166,22 @@ public class ControllerTest {
         assertFalse(card.isGoblin());
     }
 
+
+    @Test
+    @Order(4)
+    void testStatController() throws JsonProcessingException {
+        StatController statController = new StatController(userService);
+
+        assertEquals(200, statController.getStats(authenticatedUser).getStatusCode());
+        assertEquals(200, statController.getScores().getStatusCode());
+
+        List<Stat> scoreboard = userService.getScoreboard();
+        assertEquals(2, scoreboard.size());
+        Stat kienStat = scoreboard.get(0);
+
+        assertEquals(100, kienStat.getElo());
+        assertEquals(0, kienStat.getWins());
+        assertEquals(0, kienStat.getDraws());
+        assertEquals(0, kienStat.getDefeats());
+    }
 }

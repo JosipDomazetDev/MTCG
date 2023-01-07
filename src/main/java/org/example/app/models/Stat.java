@@ -41,7 +41,7 @@ public class Stat {
     }
 
     @JsonProperty("losses")
-    private int getDefeats() {
+    public int getDefeats() {
         return total - wins - draws;
     }
 
