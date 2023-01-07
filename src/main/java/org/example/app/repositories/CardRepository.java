@@ -96,7 +96,7 @@ public class CardRepository implements Repository {
         return ps;
     }
 
-    public void update(Package pack, Connection connection) {
+    public void updatePack(Package pack, Connection connection) {
         try (
                 PreparedStatement ps = createUpdatePackageStatement(pack, connection)
         ) {
@@ -129,7 +129,7 @@ public class CardRepository implements Repository {
 
     public void update(Package pack, User authenticatedUser) {
         getConnectionPool().executeAtomicTransaction((connection) -> {
-            update(pack, connection);
+            updatePack(pack, connection);
 
             try (
                     PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser, connection)

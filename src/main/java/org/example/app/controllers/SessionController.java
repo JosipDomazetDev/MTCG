@@ -8,7 +8,6 @@ import org.example.app.models.User;
 import org.example.app.services.UserService;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
-import org.example.server.Request;
 import org.example.server.Response;
 
 public class SessionController extends Controller {
@@ -20,8 +19,8 @@ public class SessionController extends Controller {
         setUserService(userService);
     }
 
-    public Response login(Request request) throws JsonProcessingException {
-        User proposedUser = getObjectMapper().readValue(request.getBody(), User.class);
+    public Response login(String requestBody) throws JsonProcessingException {
+        User proposedUser = getObjectMapper().readValue(requestBody, User.class);
         boolean loginSuccessful = getUserService().login(proposedUser);
 
         if (!loginSuccessful) {

@@ -131,7 +131,7 @@ public class App implements ServerApp {
                         return this.userController.createUser(request.getBody());
                     }
                     if (request.getPathname().equals("/sessions")) {
-                        return this.sessionController.login(request);
+                        return this.sessionController.login(request.getBody());
                     }
 
                     if (!isAuthenticated) {

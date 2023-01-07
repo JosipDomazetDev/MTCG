@@ -1,8 +1,13 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.example.app.controllers.CardController;
+import org.example.app.controllers.SessionController;
 import org.example.app.controllers.UserController;
 import org.example.app.models.PasswordUtils;
 import org.example.app.models.User;
+import org.example.app.repositories.CardRepository;
 import org.example.app.repositories.UserRepository;
+import org.example.app.services.CardService;
+import org.example.app.services.TradingService;
 import org.example.app.services.UserService;
 import org.example.server.Response;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,6 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ControllerTest {
     User authenticatedUser = new User("kienboec", "test");
     UserRepository userRepositorySpy;
+    CardRepository cardRepositorySpy;
+    CardService cardService = new CardService();
+    TradingService tradingService = new TradingService();
+    UserService userService = new UserService();
 
     public ControllerTest() throws NoSuchAlgorithmException {
     }
@@ -29,11 +38,14 @@ public class ControllerTest {
         Mockito.doNothing().when(userRepositorySpy).insert(Mockito.any());
         Mockito.doNothing().when(userRepositorySpy).update(Mockito.any());
 
+        cardRepositorySpy
+                = Mockito.spy(Mockito.mock(CardRepository.class));
+        Mockito.doNothing().when(cardRepositorySpy).insert(Mockito.any());
+        Mockito.doNothing().when(cardRepositorySpy).update(Mockito.any(), Mockito.any());
     }
 
     @Test
     void testUserController() throws NoSuchAlgorithmException, JsonProcessingException {
-        UserService userService = new UserService();
         UserController userController = new UserController(userService, userRepositorySpy);
 
         Response create = userController.createUser("{\"Username\":\"kienboec\", \"Password\":\"daniel\"}");
@@ -53,4 +65,20 @@ public class ControllerTest {
         assertEquals(kienbocUser.getCoins(), 20);
         assertEquals(kienbocUser.getPasswordHash(), PasswordUtils.hashPassword("daniel".toCharArray()));
     }
+
+    @Test
+    void testSessionController() throws JsonProcessingException {
+        SessionController sessionController = new SessionController(userService);
+
+        Response login = sessionController.login("{\"Username\":\"kienboec\", \"Password\":\"WRONG\"}");
+        assertEquals(login.getStatusCode(), 401);
+
+        login = sessionController.login("{\"Username\":\"kienboec\", \"Password\":\"daniel\"}");
+        assertEquals(login.getStatusCode(), 200);
+
+        User authenticatedUser1 = sessionController.getAuthenticatedUser("kienboec-mtcgToken");
+        assertEquals(authenticatedUser1.getUsername(), "kienboec");
+    }
+
+
 }
