@@ -45,6 +45,12 @@ public class Stat {
         return total - wins - draws;
     }
 
+    @JsonProperty("winRate")
+    private String getWinRate() {
+        int perc = (int) Math.round((double) wins / total * 100);
+        return String.format("%d%%", perc);
+    }
+
     public void won() {
         total++;
         wins++;
