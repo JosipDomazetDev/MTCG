@@ -168,7 +168,7 @@ public class App implements ServerApp {
                         return this.userController.putUser(request.getBody(), matchesUserPath, authenticatedUser);
                     }
                     if (request.getPathname().equals("/decks")) {
-                        return this.cardController.putCardsIntoDeck(request, authenticatedUser);
+                        return this.cardController.putCardsIntoDeck(request.getBody(), authenticatedUser);
                     }
                 }
                 case DELETE -> {

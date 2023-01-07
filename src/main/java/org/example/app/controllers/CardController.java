@@ -15,7 +15,6 @@ import org.example.app.services.exceptions.NotAvailableException;
 import org.example.app.services.exceptions.WrongCardAmountException;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
-import org.example.server.Request;
 import org.example.server.Response;
 
 import java.util.List;
@@ -85,8 +84,8 @@ public class CardController extends Controller {
     }
 
 
-    public Response putCardsIntoDeck(Request request, User authenticatedUser) throws JsonProcessingException {
-        List<String> cardIds = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
+    public Response putCardsIntoDeck(String requestBody, User authenticatedUser) throws JsonProcessingException {
+        List<String> cardIds = getObjectMapper().readValue(requestBody, new TypeReference<>() {
         });
 
         try {

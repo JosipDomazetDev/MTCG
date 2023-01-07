@@ -1,25 +1,26 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.example.app.controllers.CardController;
 import org.example.app.controllers.PackageController;
 import org.example.app.controllers.SessionController;
 import org.example.app.controllers.UserController;
-import org.example.app.models.PasswordUtils;
-import org.example.app.models.User;
+import org.example.app.models.*;
+import org.example.app.models.Package;
 import org.example.app.repositories.CardRepository;
 import org.example.app.repositories.UserRepository;
 import org.example.app.services.CardService;
 import org.example.app.services.TradingService;
 import org.example.app.services.UserService;
 import org.example.server.Response;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ControllerTest {
     User authenticatedUser;
     User adminUser;
@@ -49,6 +50,7 @@ public class ControllerTest {
     }
 
     @Test
+    @Order(1)
     void testUserAndSessionController() throws NoSuchAlgorithmException, JsonProcessingException {
         UserController userController = new UserController(userService, userRepositorySpy);
         SessionController sessionController = new SessionController(userService);
@@ -87,6 +89,7 @@ public class ControllerTest {
     }
 
     @Test
+    @Order(2)
     void testPackageController() throws JsonProcessingException {
         PackageController packageController = new PackageController(cardService, cardRepositorySpy);
 
@@ -119,6 +122,48 @@ public class ControllerTest {
         assertEquals(200, packageController.buyPackage(authenticatedUser).getStatusCode());
         assertEquals(authenticatedUser.getCoins(), 0);
         assertEquals(403, packageController.buyPackage(authenticatedUser).getStatusCode());
+
+        Package aPackage = cardService.getPackages().get(0);
+        assertEquals(authenticatedUser, aPackage.getUser());
+        assertEquals(5, aPackage.getCards().size());
+    }
+
+    @Test
+    @Order(3)
+    void testCardController() throws JsonProcessingException {
+        CardController cardController = new CardController(cardService, tradingService, cardRepositorySpy);
+
+        String d = "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
+        String dWrongLength = "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
+        String dWrongCard = "[\"aa9999a0-734c-49c6-8f4a-651864b14e62\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
+
+        assertEquals(204, cardController.getCardsFromDeck(authenticatedUser, true).getStatusCode());
+
+        assertEquals(400, cardController.putCardsIntoDeck(dWrongLength, authenticatedUser).getStatusCode());
+        assertEquals(403, cardController.putCardsIntoDeck(dWrongCard, authenticatedUser).getStatusCode());
+
+
+        assertEquals(200, cardController.putCardsIntoDeck(d, authenticatedUser).getStatusCode());
+        assertEquals(200, cardController.getCardsFromDeck(authenticatedUser, true).getStatusCode());
+
+        List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
+        assertEquals("WaterGoblin", cardsFromDeck.get(0).getName());
+        assertEquals("Dragon", cardsFromDeck.get(1).getName());
+        assertEquals("WaterSpell", cardsFromDeck.get(2).getName());
+        assertEquals("RegularSpell", cardsFromDeck.get(3).getName());
+
+        String dDragon = "[\"4a2757d6-b1c3-47ac-b9a3-91deab093531\", \"d04b736a-e874-4137-b191-638e0ff3b4e7\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"ed1dc1bc-f0aa-4a0c-8d43-1402189b33c8\"]";
+        assertEquals(200, cardController.putCardsIntoDeck(dDragon, authenticatedUser).getStatusCode());
+
+        cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
+        Card card = cardsFromDeck.get(0);
+        assertEquals("Dragon", card.getName());
+        assertEquals(50.0, card.getDamage());
+        assertEquals(CardType.MONSTER, card.getCardType());
+        assertEquals(ElementType.NORMAL, card.getElementType());
+        assertEquals(authenticatedUser, card.getOwner());
+        assertTrue(card.isDragon());
+        assertFalse(card.isGoblin());
     }
 
 }
