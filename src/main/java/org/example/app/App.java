@@ -150,11 +150,11 @@ public class App implements ServerApp {
 
                     String matchesTradingsPath = matchesRootPath("tradings", request);
                     if (matchesTradingsPath != null) {
-                        return this.tradingController.performTrade(request, authenticatedUser, matchesTradingsPath);
+                        return this.tradingController.performTrade(request.getBody(), authenticatedUser, matchesTradingsPath);
                     }
 
                     if (request.getPathname().equals("/tradings")) {
-                        return this.tradingController.postTrades(request, authenticatedUser);
+                        return this.tradingController.postTrades(request.getBody(), authenticatedUser);
                     }
                 }
                 case PUT -> {

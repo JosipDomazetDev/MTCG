@@ -56,9 +56,9 @@ public class TradingController extends Controller {
         );
     }
 
-    public Response postTrades(Request request, User authenticatedUser) throws JsonProcessingException {
+    public Response postTrades(String requestBody, User authenticatedUser) throws JsonProcessingException {
         try {
-            Trade trade = getObjectMapper().readValue(request.getBody(), Trade.class);
+            Trade trade = getObjectMapper().readValue(requestBody, Trade.class);
             List<Card> cardsFromUser = cardService.getCardsFromUser(authenticatedUser);
             List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
 
@@ -110,9 +110,9 @@ public class TradingController extends Controller {
         }
     }
 
-    public Response performTrade(Request request, User authenticatedUser, String tradeId) throws JsonProcessingException {
+    public Response performTrade(String requestBody, User authenticatedUser, String tradeId) throws JsonProcessingException {
         try {
-            String cardId = getObjectMapper().readValue(request.getBody(), String.class);
+            String cardId = getObjectMapper().readValue(requestBody, String.class);
             List<Card> cardsFromUser = cardService.getCardsFromUser(authenticatedUser);
             List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
 

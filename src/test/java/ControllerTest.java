@@ -4,6 +4,7 @@ import org.example.app.models.*;
 import org.example.app.models.Package;
 import org.example.app.repositories.BattleRepository;
 import org.example.app.repositories.CardRepository;
+import org.example.app.repositories.TradeRepository;
 import org.example.app.repositories.UserRepository;
 import org.example.app.services.BattleService;
 import org.example.app.services.CardService;
@@ -17,6 +18,7 @@ import org.mockito.Mockito;
 import java.security.NoSuchAlgorithmException;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,11 +27,12 @@ import static org.mockito.Mockito.mockStatic;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ControllerTest {
-    User authenticatedUser;
+    User kienboecUser;
     User adminUser;
     UserRepository userRepositorySpy;
     CardRepository cardRepositorySpy;
     BattleRepository battleRepositorySpy;
+    TradeRepository tradeRepositorySpy;
 
     CardService cardService = new CardService();
     TradingService tradingService = new TradingService();
@@ -57,6 +60,12 @@ public class ControllerTest {
         battleRepositorySpy
                 = Mockito.spy(Mockito.mock(BattleRepository.class));
         Mockito.doNothing().when(battleRepositorySpy).insert(Mockito.any());
+
+        tradeRepositorySpy
+                = Mockito.spy(Mockito.mock(TradeRepository.class));
+        Mockito.doNothing().when(tradeRepositorySpy).delete(Mockito.any());
+        Mockito.doNothing().when(tradeRepositorySpy).performTrade(Mockito.any());
+        Mockito.doNothing().when(tradeRepositorySpy).insert(Mockito.any());
     }
 
     @Test
@@ -76,12 +85,12 @@ public class ControllerTest {
 
         User authenticatedUser1 = sessionController.getAuthenticatedUser("kienboec-mtcgToken");
         assertEquals(authenticatedUser1.getUsername(), "kienboec");
-        authenticatedUser = authenticatedUser1;
+        kienboecUser = authenticatedUser1;
 
-        Response put = userController.putUser("{\"Name\": \"Kienboeck\",  \"Bio\": \"me playin...\", \"Image\": \":-)\"}", "kienboec", authenticatedUser);
+        Response put = userController.putUser("{\"Name\": \"Kienboeck\",  \"Bio\": \"me playin...\", \"Image\": \":-)\"}", "kienboec", kienboecUser);
         assertEquals(200, put.getStatusCode());
 
-        Response get = userController.getUser("kienboec", authenticatedUser);
+        Response get = userController.getUser("kienboec", kienboecUser);
         assertEquals(200, get.getStatusCode());
         User kienbocUser = userService.getUser("kienboec");
 
@@ -94,7 +103,7 @@ public class ControllerTest {
 
         userController.createUser("{\"Username\":\"admin\",    \"Password\":\"istrator\"}");
         adminUser = userService.getUser("admin");
-        assertFalse(authenticatedUser.isAdmin());
+        assertFalse(kienboecUser.isAdmin());
         assertTrue(adminUser.isAdmin());
     }
 
@@ -111,7 +120,7 @@ public class ControllerTest {
         String p5 = "[{\"Id\":\"b2237eca-0271-43bd-87f6-b22f70d42ca4\", \"Name\":\"WaterGoblin\", \"Damage\": 11.0}, {\"Id\":\"9e8238a4-8a7a-487f-9f7d-a8c97899eb48\", \"Name\":\"Dragon\", \"Damage\": 70.0}, {\"Id\":\"d60e23cf-2238-4d49-844f-c7589ee5342e\", \"Name\":\"WaterSpell\", \"Damage\": 22.0}, {\"Id\":\"fc305a7a-36f7-4d30-ad27-462ca0445649\", \"Name\":\"Ork\", \"Damage\": 40.0}, {\"Id\":\"84d276ee-21ec-4171-a509-c1b88162831c\", \"Name\":\"RegularSpell\", \"Damage\": 28.0}]";
 
         // Not admin
-        assertEquals(403, packageController.createPackage(p0, authenticatedUser).getStatusCode());
+        assertEquals(403, packageController.createPackage(p0, kienboecUser).getStatusCode());
 
 
         assertEquals(201, packageController.createPackage(p0, adminUser).getStatusCode());
@@ -125,17 +134,17 @@ public class ControllerTest {
         assertEquals(409, packageController.createPackage(p0, adminUser).getStatusCode());
 
 
-        assertEquals(authenticatedUser.getCoins(), 20);
-        assertEquals(200, packageController.buyPackage(authenticatedUser).getStatusCode());
-        assertEquals(200, packageController.buyPackage(authenticatedUser).getStatusCode());
-        assertEquals(200, packageController.buyPackage(authenticatedUser).getStatusCode());
-        assertEquals(200, packageController.buyPackage(authenticatedUser).getStatusCode());
-        assertEquals(authenticatedUser.getCoins(), 0);
-        assertEquals(403, packageController.buyPackage(authenticatedUser).getStatusCode());
+        assertEquals(kienboecUser.getCoins(), 20);
+        assertEquals(200, packageController.buyPackage(kienboecUser).getStatusCode());
+        assertEquals(200, packageController.buyPackage(kienboecUser).getStatusCode());
+        assertEquals(200, packageController.buyPackage(kienboecUser).getStatusCode());
+        assertEquals(200, packageController.buyPackage(kienboecUser).getStatusCode());
+        assertEquals(kienboecUser.getCoins(), 0);
+        assertEquals(403, packageController.buyPackage(kienboecUser).getStatusCode());
 
 
         Package aPackage = cardService.getPackages().get(0);
-        assertEquals(authenticatedUser, aPackage.getUser());
+        assertEquals(kienboecUser, aPackage.getUser());
         assertEquals(5, aPackage.getCards().size());
 
 
@@ -150,39 +159,39 @@ public class ControllerTest {
     @Order(3)
     void testCardController() throws JsonProcessingException {
         CardController cardController = new CardController(cardService, tradingService, cardRepositorySpy);
-        assertEquals(200, cardController.getCards(authenticatedUser).getStatusCode());
+        assertEquals(200, cardController.getCards(kienboecUser).getStatusCode());
         // Should own 20 cards
-        assertEquals(20, cardService.getCardsFromUser(authenticatedUser).size());
+        assertEquals(20, cardService.getCardsFromUser(kienboecUser).size());
 
         String d = "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
         String dWrongLength = "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
         String dWrongCard = "[\"aa9999a0-734c-49c6-8f4a-651864b14e62\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"171f6076-4eb5-4a7d-b3f2-2d650cc3d237\"]";
 
-        assertEquals(204, cardController.getCardsFromDeck(authenticatedUser, true).getStatusCode());
+        assertEquals(204, cardController.getCardsFromDeck(kienboecUser, true).getStatusCode());
 
-        assertEquals(400, cardController.putCardsIntoDeck(dWrongLength, authenticatedUser).getStatusCode());
-        assertEquals(403, cardController.putCardsIntoDeck(dWrongCard, authenticatedUser).getStatusCode());
+        assertEquals(400, cardController.putCardsIntoDeck(dWrongLength, kienboecUser).getStatusCode());
+        assertEquals(403, cardController.putCardsIntoDeck(dWrongCard, kienboecUser).getStatusCode());
 
 
-        assertEquals(200, cardController.putCardsIntoDeck(d, authenticatedUser).getStatusCode());
-        assertEquals(200, cardController.getCardsFromDeck(authenticatedUser, true).getStatusCode());
+        assertEquals(200, cardController.putCardsIntoDeck(d, kienboecUser).getStatusCode());
+        assertEquals(200, cardController.getCardsFromDeck(kienboecUser, true).getStatusCode());
 
-        List<Card> cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
+        List<Card> cardsFromDeck = cardService.getCardsFromDeck(kienboecUser);
         assertEquals("WaterGoblin", cardsFromDeck.get(0).getName());
         assertEquals("Dragon", cardsFromDeck.get(1).getName());
         assertEquals("WaterSpell", cardsFromDeck.get(2).getName());
         assertEquals("RegularSpell", cardsFromDeck.get(3).getName());
 
         String dDragon = "[\"4a2757d6-b1c3-47ac-b9a3-91deab093531\", \"d04b736a-e874-4137-b191-638e0ff3b4e7\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"ed1dc1bc-f0aa-4a0c-8d43-1402189b33c8\"]";
-        assertEquals(200, cardController.putCardsIntoDeck(dDragon, authenticatedUser).getStatusCode());
+        assertEquals(200, cardController.putCardsIntoDeck(dDragon, kienboecUser).getStatusCode());
 
-        cardsFromDeck = cardService.getCardsFromDeck(authenticatedUser);
+        cardsFromDeck = cardService.getCardsFromDeck(kienboecUser);
         Card card = cardsFromDeck.get(0);
         assertEquals("Dragon", card.getName());
         assertEquals(50.0, card.getDamage());
         assertEquals(CardType.MONSTER, card.getCardType());
         assertEquals(ElementType.NORMAL, card.getElementType());
-        assertEquals(authenticatedUser, card.getOwner());
+        assertEquals(kienboecUser, card.getOwner());
         assertTrue(card.isDragon());
         assertFalse(card.isGoblin());
 
@@ -196,7 +205,7 @@ public class ControllerTest {
     void testStatController() throws JsonProcessingException {
         StatController statController = new StatController(userService);
 
-        assertEquals(200, statController.getStats(authenticatedUser).getStatusCode());
+        assertEquals(200, statController.getStats(kienboecUser).getStatusCode());
         assertEquals(200, statController.getScores().getStatusCode());
 
         List<Stat> scoreboard = userService.getScoreboard();
@@ -212,7 +221,6 @@ public class ControllerTest {
     void executeWithFixedSeed(RunnableWithException action) throws NoSuchAlgorithmException, JsonProcessingException, InterruptedException {
         Random random = new Random();
         random.setSeed(1);
-        System.out.println(random.nextInt(10));
         try (MockedStatic<Battle> mocked = mockStatic(Battle.class)) {
             mocked.when(Battle::getRand).thenReturn(random);
             action.run();
@@ -230,7 +238,7 @@ public class ControllerTest {
             performBattle(battleController);
             assertEquals(95, adminUser.getStat().getElo());
             assertEquals(0, adminUser.getStat().getWins());
-            assertEquals(0,adminUser.getStat().getDraws());
+            assertEquals(0, adminUser.getStat().getDraws());
             assertEquals(1, adminUser.getStat().getDefeats());
 
             performBattle(battleController);
@@ -238,13 +246,13 @@ public class ControllerTest {
 
             assertEquals(85, adminUser.getStat().getElo());
             assertEquals(0, adminUser.getStat().getWins());
-            assertEquals(0,adminUser.getStat().getDraws());
+            assertEquals(0, adminUser.getStat().getDraws());
             assertEquals(3, adminUser.getStat().getDefeats());
 
-            assertEquals(109, authenticatedUser.getStat().getElo());
-            assertEquals(3, authenticatedUser.getStat().getWins());
-            assertEquals(0,authenticatedUser.getStat().getDraws());
-            assertEquals(0, authenticatedUser.getStat().getDefeats());
+            assertEquals(109, kienboecUser.getStat().getElo());
+            assertEquals(3, kienboecUser.getStat().getWins());
+            assertEquals(0, kienboecUser.getStat().getDraws());
+            assertEquals(0, kienboecUser.getStat().getDefeats());
         });
 
     }
@@ -252,7 +260,7 @@ public class ControllerTest {
     private void performBattle(BattleController battleController) throws InterruptedException {
         Thread thread = new Thread(() -> {
             try {
-                battleController.createOrStartBattle(authenticatedUser);
+                battleController.createOrStartBattle(kienboecUser);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -261,6 +269,64 @@ public class ControllerTest {
         Thread.sleep(100);
 
         assertEquals(200, battleController.createOrStartBattle(adminUser).getStatusCode());
+    }
+
+
+    @Test
+    @Order(6)
+    void testTradeController() throws JsonProcessingException {
+        TradingController tradingController = new TradingController(tradingService, cardService, tradeRepositorySpy);
+
+        String t = "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+
+
+        assertEquals(201, tradingController.postTrades(t, kienboecUser).getStatusCode());
+
+        Trade trade = tradingService.getAllTrades().get(0);
+        assertEquals("6cd85277-4590-49d4-b0cf-ba0a921faad0", trade.getId());
+        assertEquals("1cb6ab86-bdb2-47e5-b6e4-68c5ab389334", trade.getCard().getId());
+        assertEquals(15, trade.getMinimumDamage());
+        assertEquals(CardType.MONSTER, trade.getCardType());
+        assertNull(trade.getUser2());
+        assertFalse(trade.isCompleted());
+
+
+        //The provided deal ID was not found.
+        assertEquals(404, tradingController.deleteTrade(kienboecUser, "wrong").getStatusCode());
+        //The deal contains a card that is not owned by the user.
+        assertEquals(403, tradingController.deleteTrade(adminUser, "6cd85277-4590-49d4-b0cf-ba0a921faad0").getStatusCode());
+        assertEquals(200, tradingController.deleteTrade(kienboecUser, "6cd85277-4590-49d4-b0cf-ba0a921faad0").getStatusCode());
+        assertEquals(0, tradingService.getAllTrades().size());
+
+
+        assertEquals(201, tradingController.postTrades(t, kienboecUser).getStatusCode());
+
+        // trade id not found
+        assertEquals(404, tradingController.performTrade("\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\"", kienboecUser, "wrong").getStatusCode());
+        // try to trade with yourself (should fail)
+        assertEquals(403, tradingController.performTrade("\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\"", kienboecUser, "6cd85277-4590-49d4-b0cf-ba0a921faad0").getStatusCode());
+        // card not owned by user
+        assertEquals(403, tradingController.performTrade("\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\"", adminUser, "6cd85277-4590-49d4-b0cf-ba0a921faad0").getStatusCode());
+        // card does not fulfill requirements
+        assertEquals(403, tradingController.performTrade("\"84d276ee-21ec-4171-a509-c1b88162831c\"", adminUser, "6cd85277-4590-49d4-b0cf-ba0a921faad0").getStatusCode());
+        // Should work
+        String dragonIdOwnedByAdminOriginally = "9e8238a4-8a7a-487f-9f7d-a8c97899eb48";
+        assertEquals(200, tradingController.performTrade("\"" + dragonIdOwnedByAdminOriginally + "\"", adminUser, "6cd85277-4590-49d4-b0cf-ba0a921faad0").getStatusCode());
+
+
+        trade = tradingService.getAllTrades().get(0);
+        assertEquals("6cd85277-4590-49d4-b0cf-ba0a921faad0", trade.getId());
+        assertEquals("1cb6ab86-bdb2-47e5-b6e4-68c5ab389334", trade.getCard().getId());
+        assertEquals(15, trade.getMinimumDamage());
+        assertEquals(CardType.MONSTER, trade.getCardType());
+        assertEquals(adminUser, trade.getUser2());
+        assertTrue(trade.isCompleted());
+
+        Card newCardKien = cardService.getCardsFromUser(kienboecUser).stream().filter(card -> Objects.equals(card.getId(), dragonIdOwnedByAdminOriginally)).findFirst().orElse(null);
+        assertEquals("Dragon", newCardKien.getName());
+
+        Card oldCardAdmin = cardService.getCardsFromUser(adminUser).stream().filter(card -> Objects.equals(card.getId(), dragonIdOwnedByAdminOriginally)).findFirst().orElse(null);
+        assertNull(oldCardAdmin);
     }
 }
 
