@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Stat;
 import org.example.app.models.User;
-import org.example.app.services.ConnectionPool;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import java.util.Objects;
 
 @Setter
 @Getter
-public class UserRepository implements Repository<User> {
+public class UserRepository implements Repository {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     ConnectionPool connectionPool;
@@ -47,21 +46,18 @@ public class UserRepository implements Repository<User> {
     }
 
 
-    @Override
     public void insert(User user) {
-        try (
-                Connection connection = getConnectionPool().getConnection();
-                PreparedStatement ps = createInsertStatement(user, connection);
-                PreparedStatement psStat = createInsertStatStatement(user, connection)
-        ) {
-            ps.execute();
-            psStat.execute();
-            getConnectionPool().releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        getConnectionPool().executeAtomicTransaction((connection) -> {
+            try (
+                    PreparedStatement ps = createInsertStatement(user, connection);
+                    PreparedStatement psStat = createInsertStatStatement(user, connection)
+            ) {
+                ps.execute();
+                psStat.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private PreparedStatement createUpdateStatement(User user, Connection connection) throws SQLException {
@@ -75,61 +71,60 @@ public class UserRepository implements Repository<User> {
         return ps;
     }
 
-    @Override
     public void update(User user) {
-        try (
-                Connection connection = getConnectionPool().getConnection();
-                PreparedStatement ps = createUpdateStatement(user, connection)
-        ) {
-            ps.execute();
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException | InterruptedException e) {
-            e.printStackTrace();
-        }
+        getConnectionPool().executeAtomicTransaction((connection) -> {
+            try (
+                    PreparedStatement ps = createUpdateStatement(user, connection)
+            ) {
+                ps.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public List<User> loadAll() {
         List<User> users = new ArrayList<>();
         List<Stat> stats = new ArrayList<>();
-        try (
-                Connection connection = getConnectionPool().getConnection();
-                PreparedStatement ps = createSelectUserStatement(connection);
-                PreparedStatement psStats = createSelectStatStatement(connection);
-                ResultSet rsUsers = ps.executeQuery();
-                ResultSet rsStats = psStats.executeQuery();
-        ) {
-            while (rsStats.next()) {
-                String fkUserId = rsStats.getString(1);
-                int elo = rsStats.getInt(2);
-                int wins = rsStats.getInt(3);
-                int draws = rsStats.getInt(4);
-                int total = rsStats.getInt(5);
-                Stat stat = new Stat(fkUserId, elo, wins, draws, total);
-                stats.add(stat);
+
+        getConnectionPool().executeQuery(connection -> {
+            try (
+                    PreparedStatement ps = createSelectUserStatement(connection);
+                    PreparedStatement psStats = createSelectStatStatement(connection);
+                    ResultSet rsUsers = ps.executeQuery();
+                    ResultSet rsStats = psStats.executeQuery()
+            ) {
+                while (rsStats.next()) {
+                    String fkUserId = rsStats.getString(1);
+                    int elo = rsStats.getInt(2);
+                    int wins = rsStats.getInt(3);
+                    int draws = rsStats.getInt(4);
+                    int total = rsStats.getInt(5);
+                    Stat stat = new Stat(fkUserId, elo, wins, draws, total);
+                    stats.add(stat);
+                }
+
+                while (rsUsers.next()) {
+                    String id = rsUsers.getString(1);
+                    String passwordHash = rsUsers.getString(2);
+                    int coins = rsUsers.getInt(3);
+                    String username = rsUsers.getString(4);
+                    String name = rsUsers.getString(5);
+                    String bio = rsUsers.getString(6);
+                    String image = rsUsers.getString(7);
+
+                    Stat stat = stats.stream().filter(stat1 -> Objects.equals(stat1.getFkUserId(), id)).findFirst().orElse(null);
+
+                    User user = new User(id, passwordHash, coins, username, name, bio, image, stat);
+
+                    users.add(user);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
 
-            while (rsUsers.next()) {
-                String id = rsUsers.getString(1);
-                String passwordHash = rsUsers.getString(2);
-                int coins = rsUsers.getInt(3);
-                String username = rsUsers.getString(4);
-                String name = rsUsers.getString(5);
-                String bio = rsUsers.getString(6);
-                String image = rsUsers.getString(7);
+        });
 
-                Stat stat = stats.stream().filter(stat1 -> Objects.equals(stat1.getFkUserId(), id)).findFirst().orElse(null);
-
-                User user = new User(id, passwordHash, coins, username, name, bio, image, stat);
-
-                users.add(user);
-            }
-
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
 
         return users;
     }

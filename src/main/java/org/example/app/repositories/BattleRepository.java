@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.Battle;
 import org.example.app.models.User;
-import org.example.app.services.ConnectionPool;
-import org.example.app.services.DatabaseService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,7 +16,7 @@ import java.util.Objects;
 
 @Setter
 @Getter
-public class BattleRepository implements Repository<Battle> {
+public class BattleRepository implements Repository {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     ConnectionPool connectionPool;
@@ -40,31 +38,25 @@ public class BattleRepository implements Repository<Battle> {
         return ps;
     }
 
-    @Override
     public void insert(Battle battle) {
-        try {
-            Connection connection = connectionPool.getConnection();
-            DatabaseService.executeTransaction(connection, () -> {
-                try (PreparedStatement ps = createInsertBattleStatement(battle, connection);) {
-                    ps.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    return;
-                }
+        getConnectionPool().executeAtomicTransaction((connection) -> {
+            try (PreparedStatement ps = createInsertBattleStatement(battle, connection)) {
+                ps.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return;
+            }
 
-                try (PreparedStatement ps1 = createUpdateStatsStatement(battle.getPlayer1(), connection);
-                     PreparedStatement ps2 = createUpdateStatsStatement(battle.getPlayer2(), connection)
-                ) {
-                    ps1.execute();
-                    ps2.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            });
-            connectionPool.releaseConnection(connection);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+            try (PreparedStatement ps1 = createUpdateStatsStatement(battle.getPlayer1(), connection);
+                 PreparedStatement ps2 = createUpdateStatsStatement(battle.getPlayer2(), connection)
+            ) {
+                ps1.execute();
+                ps2.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+
     }
 
     private PreparedStatement createUpdateStatsStatement(User user, Connection connection) throws SQLException {
@@ -79,9 +71,6 @@ public class BattleRepository implements Repository<Battle> {
         return ps;
     }
 
-    @Override
-    public void update(Battle battle) {
-    }
 
     private PreparedStatement createSelectBattleStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, fk_player1id, fk_player2id, battlelog, battleoutcome, created_at  FROM battle";
@@ -91,37 +80,34 @@ public class BattleRepository implements Repository<Battle> {
     public List<Battle> loadAll(List<User> users) {
         List<Battle> battles = new ArrayList<>();
 
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement battleStatement = createSelectBattleStatement(connection);
-                ResultSet rsBattles = battleStatement.executeQuery();
-        ) {
-            while (rsBattles.next()) {
-                String id = rsBattles.getString(1);
-                String fkPlayer1Id = rsBattles.getString(2);
-                String fkPlayer2Id = rsBattles.getString(3);
-                String battleLog = rsBattles.getString(4);
-                String battleOutcome = rsBattles.getString(5);
+        getConnectionPool().executeQuery(connection -> {
+            try (
+                    PreparedStatement battleStatement = createSelectBattleStatement(connection);
+                    ResultSet rsBattles = battleStatement.executeQuery()
+            ) {
+                while (rsBattles.next()) {
+                    String id = rsBattles.getString(1);
+                    String fkPlayer1Id = rsBattles.getString(2);
+                    String fkPlayer2Id = rsBattles.getString(3);
+                    String battleLog = rsBattles.getString(4);
+                    String battleOutcome = rsBattles.getString(5);
 
 
-                User player1 = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkPlayer1Id))
-                        .findFirst().orElse(null);
-                User player2 = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkPlayer2Id))
-                        .findFirst().orElse(null);
+                    User player1 = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkPlayer1Id))
+                            .findFirst().orElse(null);
+                    User player2 = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkPlayer2Id))
+                            .findFirst().orElse(null);
 
-                Battle battle = new Battle(id, player1, player2, battleLog, battleOutcome);
-                battles.add(battle);
+                    Battle battle = new Battle(id, player1, player2, battleLog, battleOutcome);
+                    battles.add(battle);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        });
 
         return battles;
-
     }
 }

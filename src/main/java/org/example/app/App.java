@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.Card;
 import org.example.app.models.User;
-import org.example.app.repositories.BattleRepository;
-import org.example.app.repositories.CardRepository;
-import org.example.app.repositories.TradeRepository;
-import org.example.app.repositories.UserRepository;
+import org.example.app.repositories.*;
 import org.example.app.services.*;
 import org.example.http.ContentType;
 import org.example.http.HttpStatus;
@@ -17,7 +14,6 @@ import org.example.server.Request;
 import org.example.server.Response;
 import org.example.server.ServerApp;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -50,48 +46,42 @@ public class App implements ServerApp {
 
     private static final ConnectionPool pool = new ConnectionPool();
     public App() {
-        try {
-            UserRepository userRepository = new UserRepository(pool);
-            CardRepository cardRepository = new CardRepository(pool);
-            BattleRepository battleRepository = new BattleRepository(pool);
-            TradeRepository tradeRepository = new TradeRepository(pool);
+        UserRepository userRepository = new UserRepository(pool);
+        CardRepository cardRepository = new CardRepository(pool);
+        BattleRepository battleRepository = new BattleRepository(pool);
+        TradeRepository tradeRepository = new TradeRepository(pool);
 
 
-            UserService userService = new UserService();
-            setUserController(new UserController(userService, userRepository));
-            setSessionController(new SessionController(userService));
+        UserService userService = new UserService();
+        setUserController(new UserController(userService, userRepository));
+        setSessionController(new SessionController(userService));
 
-            CardService cardService = new CardService();
-            TradingService tradingService = new TradingService();
+        CardService cardService = new CardService();
+        TradingService tradingService = new TradingService();
 
-            setPackageController(new PackageController(cardService, cardRepository));
-            setCardController(new CardController(cardService, tradingService, cardRepository));
+        setPackageController(new PackageController(cardService, cardRepository));
+        setCardController(new CardController(cardService, tradingService, cardRepository));
 
-            setStatController(new StatController(userService));
+        setStatController(new StatController(userService));
 
-            setBattleController(new BattleController(new BattleService(), battleRepository));
+        setBattleController(new BattleController(new BattleService(), battleRepository));
 
-            setTradingController(new TradingController(tradingService, cardService, tradeRepository));
+        setTradingController(new TradingController(tradingService, cardService, tradeRepository));
 
 
-            userController.loadAll();
-            cardController.loadAll(userService.getUsers());
-            battleController.loadAll(userService.getUsers());
+        userController.loadAll();
+        cardController.loadAll(userService.getUsers());
+        battleController.loadAll(userService.getUsers());
 
-            List<Card> cards = cardService.getPackages().stream().flatMap(aPackage -> aPackage.getCards().stream()).toList();
-            tradingController.loadAll(userService.getUsers(), cards);
-
-        } finally {
-
-        }
+        List<Card> cards = cardService.getPackages().stream().flatMap(aPackage -> aPackage.getCards().stream()).toList();
+        tradingController.loadAll(userService.getUsers(), cards);
 
     }
 
     public Response handleRequest(Request request) throws SQLException {
         System.out.println("Request handled by Thread: " + currentThread().getName());
-        Response response = route(request);
 
-        return response;
+        return route(request);
     }
 
     private Response route(Request request) {

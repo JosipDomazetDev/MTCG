@@ -156,5 +156,5 @@ create table if not exists trade
             REFERENCES "user" (id)
             ON DELETE CASCADE
 );
-INSERT INTO "user"(id, username, passwordHash, coins, name, bio, image)
-VALUES ('josip', 'josip', 'josip', 20, 'gkrkrg', 'drfrggr', 'fefrk');
+
+SELECT * FROM pg_stat_activity;

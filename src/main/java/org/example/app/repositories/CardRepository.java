@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.example.app.models.*;
 import org.example.app.models.Package;
-import org.example.app.services.ConnectionPool;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,7 +16,7 @@ import java.util.Objects;
 
 @Setter
 @Getter
-public class CardRepository implements Repository<Package> {
+public class CardRepository implements Repository {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     ConnectionPool connectionPool;
@@ -55,11 +54,8 @@ public class CardRepository implements Repository<Package> {
     }
 
 
-    @Override
     public void insert(Package pack) {
-        try {
-            Connection connection = connectionPool.getConnection();
-
+        getConnectionPool().executeAtomicTransaction((connection) -> {
             try (
                     PreparedStatement ps = createInsertPackageStatement(pack, connection)
             ) {
@@ -78,12 +74,7 @@ public class CardRepository implements Repository<Package> {
                     e.printStackTrace();
                 }
             }
-
-            connectionPool.releaseConnection(connection);
-        } catch (InterruptedException ignored) {
-
-        }
-
+        });
     }
 
 
@@ -105,34 +96,24 @@ public class CardRepository implements Repository<Package> {
         return ps;
     }
 
-    @Override
-    public void update(Package pack) {
-        try {
-            Connection connection = connectionPool.getConnection();
+    public void update(Package pack, Connection connection) {
+        try (
+                PreparedStatement ps = createUpdatePackageStatement(pack, connection)
+        ) {
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return;
+        }
 
-
+        for (Card card : pack.getCards()) {
             try (
-                    PreparedStatement ps = createUpdatePackageStatement(pack, connection)
+                    PreparedStatement psCards = createUpdateCardStatement(card, connection)
             ) {
-                ps.execute();
+                psCards.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
-                return;
             }
-
-            for (Card card : pack.getCards()) {
-                try (
-                        PreparedStatement psCards = createUpdateCardStatement(card, connection)
-                ) {
-                    psCards.execute();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            connectionPool.releaseConnection(connection);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -147,19 +128,17 @@ public class CardRepository implements Repository<Package> {
     }
 
     public void update(Package pack, User authenticatedUser) {
-        update(pack);
+        getConnectionPool().executeAtomicTransaction((connection) -> {
+            update(pack, connection);
 
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser, connection)
-        ) {
-            ps.execute();
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+            try (
+                    PreparedStatement ps = createUpdateCoinsStatement(authenticatedUser, connection)
+            ) {
+                ps.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private PreparedStatement createDeleteDeckStatement(Deck deck, Connection connection) throws SQLException {
@@ -181,10 +160,7 @@ public class CardRepository implements Repository<Package> {
     }
 
     public void updateDeck(Deck deck) {
-
-        try {
-            Connection connection = connectionPool.getConnection();
-
+        getConnectionPool().executeAtomicTransaction((connection) -> {
             try (
                     PreparedStatement psDelete = createDeleteDeckStatement(deck, connection)
             ) {
@@ -203,12 +179,7 @@ public class CardRepository implements Repository<Package> {
                     e.printStackTrace();
                 }
             }
-
-            connectionPool.releaseConnection(connection);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
+        });
     }
 
     private PreparedStatement createSelectCardStatement(Connection connection) throws SQLException {
@@ -229,79 +200,78 @@ public class CardRepository implements Repository<Package> {
     public List<Package> loadAll(List<User> users) {
         List<Card> cards = new ArrayList<>();
         List<Package> packs = new ArrayList<>();
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement cardStatement = createSelectCardStatement(connection);
-                PreparedStatement packStatement = createSelectPackStatement(connection);
-                PreparedStatement deckStatement = createSelectDeckStatement(connection);
-                ResultSet rsCards = cardStatement.executeQuery();
-                ResultSet rsPacks = packStatement.executeQuery();
-                ResultSet rsDecks = deckStatement.executeQuery()
-        ) {
-            while (rsPacks.next()) {
-                String id = rsPacks.getString(1);
-                int price = rsPacks.getInt(2);
-                String fkUserid = rsPacks.getString(3);
-                User user = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkUserid))
-                        .findFirst().orElse(null);
+
+        getConnectionPool().executeQuery(connection -> {
+            try (
+                    PreparedStatement cardStatement = createSelectCardStatement(connection);
+                    PreparedStatement packStatement = createSelectPackStatement(connection);
+                    PreparedStatement deckStatement = createSelectDeckStatement(connection);
+                    ResultSet rsCards = cardStatement.executeQuery();
+                    ResultSet rsPacks = packStatement.executeQuery();
+                    ResultSet rsDecks = deckStatement.executeQuery()
+            ) {
+                while (rsPacks.next()) {
+                    String id = rsPacks.getString(1);
+                    int price = rsPacks.getInt(2);
+                    String fkUserid = rsPacks.getString(3);
+                    User user = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkUserid))
+                            .findFirst().orElse(null);
 
 
-                Package pack = new Package(id, price, user);
-                packs.add(pack);
-            }
-
-            while (rsCards.next()) {
-                String id = rsCards.getString(1);
-                String name = rsCards.getString(2);
-                double damage = rsCards.getInt(3);
-                String elementType = rsCards.getString(4);
-                String cardType = rsCards.getString(5);
-                String fkOwnerId = rsCards.getString(6);
-                String fkPackId = rsCards.getString(7);
-
-
-                User owner = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkOwnerId))
-                        .findFirst().orElse(null);
-                Package pack = packs.stream().
-                        filter(p -> Objects.equals(p.getId(), fkPackId))
-                        .findFirst().orElse(null);
-
-                Card card = new Card(id, name, damage, elementType, cardType, owner, pack);
-
-                cards.add(card);
-            }
-
-            for (Package pack : packs) {
-                pack.setCards(cards.stream().filter(card -> Objects.equals(card.getPack().getId(), pack.getId())).toList());
-            }
-
-
-            while (rsDecks.next()) {
-                String fkUserId = rsDecks.getString(1);
-                String fkCardId = rsDecks.getString(2);
-
-                User user = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkUserId))
-                        .findFirst().orElse(null);
-
-
-                Card card = cards.stream().
-                        filter(c -> Objects.equals(c.getId(), fkCardId))
-                        .findFirst().orElse(null);
-
-                if (user != null) {
-                    user.getDeck().getCards().add(card);
+                    Package pack = new Package(id, price, user);
+                    packs.add(pack);
                 }
-            }
 
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+                while (rsCards.next()) {
+                    String id = rsCards.getString(1);
+                    String name = rsCards.getString(2);
+                    double damage = rsCards.getInt(3);
+                    String elementType = rsCards.getString(4);
+                    String cardType = rsCards.getString(5);
+                    String fkOwnerId = rsCards.getString(6);
+                    String fkPackId = rsCards.getString(7);
+
+
+                    User owner = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkOwnerId))
+                            .findFirst().orElse(null);
+                    Package pack = packs.stream().
+                            filter(p -> Objects.equals(p.getId(), fkPackId))
+                            .findFirst().orElse(null);
+
+                    Card card = new Card(id, name, damage, elementType, cardType, owner, pack);
+
+                    cards.add(card);
+                }
+
+                for (Package pack : packs) {
+                    pack.setCards(cards.stream().filter(card -> Objects.equals(card.getPack().getId(), pack.getId())).toList());
+                }
+
+
+                while (rsDecks.next()) {
+                    String fkUserId = rsDecks.getString(1);
+                    String fkCardId = rsDecks.getString(2);
+
+                    User user = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkUserId))
+                            .findFirst().orElse(null);
+
+
+                    Card card = cards.stream().
+                            filter(c -> Objects.equals(c.getId(), fkCardId))
+                            .findFirst().orElse(null);
+
+                    if (user != null) {
+                        user.getDeck().getCards().add(card);
+                    }
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
 
         return packs;
     }

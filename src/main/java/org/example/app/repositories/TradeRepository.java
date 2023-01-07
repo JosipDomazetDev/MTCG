@@ -6,7 +6,6 @@ import lombok.Setter;
 import org.example.app.models.Card;
 import org.example.app.models.Trade;
 import org.example.app.models.User;
-import org.example.app.services.ConnectionPool;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,7 +17,7 @@ import java.util.Objects;
 
 @Setter
 @Getter
-public class TradeRepository implements Repository<Trade> {
+public class TradeRepository implements Repository {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     ConnectionPool connectionPool;
@@ -44,23 +43,16 @@ public class TradeRepository implements Repository<Trade> {
         return ps;
     }
 
-    @Override
     public void insert(Trade trade) {
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement ps = createInsertTradeStatement(trade, connection);
-        ) {
-            ps.execute();
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void update(Trade trade) {
+        getConnectionPool().executeAtomicTransaction((connection) -> {
+            try (
+                    PreparedStatement ps = createInsertTradeStatement(trade, connection)
+            ) {
+                ps.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
 
@@ -72,17 +64,15 @@ public class TradeRepository implements Repository<Trade> {
     }
 
     public void delete(String tradeId) {
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement ps = createDeleteTradeStatement(tradeId, connection);
-        ) {
-            ps.execute();
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        getConnectionPool().executeAtomicTransaction((connection) -> {
+            try (
+                    PreparedStatement ps = createDeleteTradeStatement(tradeId, connection)
+            ) {
+                ps.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private PreparedStatement createUpdateCardOwnerStatement(Card card, Connection connection) throws SQLException {
@@ -105,26 +95,24 @@ public class TradeRepository implements Repository<Trade> {
     }
 
     public void performTrade(List<Object> result) {
-        Card card = (Card) result.get(0);
-        Card offeredCard = (Card) result.get(1);
-        Trade trade = (Trade) result.get(2);
+        getConnectionPool().executeAtomicTransaction((connection) -> {
 
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement ps1 = createUpdateCardOwnerStatement(card, connection);
-                PreparedStatement ps2 = createUpdateCardOwnerStatement(offeredCard, connection);
-                PreparedStatement psTrade = createUpdateTradeStatement(trade, connection);
-        ) {
-            ps1.execute();
-            ps2.execute();
-            psTrade.execute();
+            Card card = (Card) result.get(0);
+            Card offeredCard = (Card) result.get(1);
+            Trade trade = (Trade) result.get(2);
 
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+            try (
+                    PreparedStatement ps1 = createUpdateCardOwnerStatement(card, connection);
+                    PreparedStatement ps2 = createUpdateCardOwnerStatement(offeredCard, connection);
+                    PreparedStatement psTrade = createUpdateTradeStatement(trade, connection)
+            ) {
+                ps1.execute();
+                ps2.execute();
+                psTrade.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private PreparedStatement createSelectTradesStatement(Connection connection) throws SQLException {
@@ -135,44 +123,41 @@ public class TradeRepository implements Repository<Trade> {
     public List<Trade> loadAll(List<User> users, List<Card> cards) {
         List<Trade> trades = new ArrayList<>();
 
-        try (
-                Connection connection = connectionPool.getConnection();
-                PreparedStatement selectTradesStatement = createSelectTradesStatement(connection);
-                ResultSet rsTrades = selectTradesStatement.executeQuery();
-        ) {
-            while (rsTrades.next()) {
-                String id = rsTrades.getString(1);
-                String fkCardToTradeId = rsTrades.getString(2);
-                String cardType = rsTrades.getString(3);
-                double minimumDamage = rsTrades.getDouble(4);
-                String fkUser1id = rsTrades.getString(5);
-                String fkUser2id = rsTrades.getString(6);
+        getConnectionPool().executeQuery(connection -> {
+            try (
+                    PreparedStatement selectTradesStatement = createSelectTradesStatement(connection);
+                    ResultSet rsTrades = selectTradesStatement.executeQuery()
+            ) {
+                while (rsTrades.next()) {
+                    String id = rsTrades.getString(1);
+                    String fkCardToTradeId = rsTrades.getString(2);
+                    String cardType = rsTrades.getString(3);
+                    double minimumDamage = rsTrades.getDouble(4);
+                    String fkUser1id = rsTrades.getString(5);
+                    String fkUser2id = rsTrades.getString(6);
 
 
-                User user1 = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkUser1id))
-                        .findFirst().orElse(null);
-                User user2 = users.stream()
-                        .filter(u -> Objects.equals(u.getId(), fkUser2id))
-                        .findFirst().orElse(null);
-                Card card = cards.stream()
-                        .filter(c -> Objects.equals(c.getId(), fkCardToTradeId))
-                        .findFirst().orElse(null);
+                    User user1 = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkUser1id))
+                            .findFirst().orElse(null);
+                    User user2 = users.stream()
+                            .filter(u -> Objects.equals(u.getId(), fkUser2id))
+                            .findFirst().orElse(null);
+                    Card card = cards.stream()
+                            .filter(c -> Objects.equals(c.getId(), fkCardToTradeId))
+                            .findFirst().orElse(null);
 
-                Trade trade = null;
-                if (card != null) {
-                    trade = new Trade(id, card, cardType, minimumDamage, user1, user2);
+                    Trade trade = null;
+                    if (card != null) {
+                        trade = new Trade(id, card, cardType, minimumDamage, user1, user2);
+                    }
+
+                    trades.add(trade);
                 }
-
-                trades.add(trade);
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-
-            connectionPool.releaseConnection(connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        });
 
         return trades;
     }
