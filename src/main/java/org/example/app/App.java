@@ -138,7 +138,7 @@ public class App implements ServerApp {
                         return ErrorController.sendUnauthorized(request);
                     }
                     if (request.getPathname().equals("/packages")) {
-                        return this.packageController.createPackage(request, authenticatedUser);
+                        return this.packageController.createPackage(request.getBody(), authenticatedUser);
                     }
                     if (request.getPathname().equals("/transactions/packages")) {
                         return this.packageController.buyPackage(authenticatedUser);

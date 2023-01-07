@@ -33,7 +33,7 @@ public class PackageController extends Controller {
         setCardRepository(cardRepository);
     }
 
-    public Response createPackage(Request request, User authenticatedUser) throws JsonProcessingException {
+    public Response createPackage(String requestBody, User authenticatedUser) throws JsonProcessingException {
         if (!authenticatedUser.isAdmin()) {
             return new Response(
                     HttpStatus.FORBIDDEN,
@@ -42,7 +42,7 @@ public class PackageController extends Controller {
 
             );
         }
-        ArrayList<Card> cards = getObjectMapper().readValue(request.getBody(), new TypeReference<>() {
+        ArrayList<Card> cards = getObjectMapper().readValue(requestBody, new TypeReference<>() {
         });
 
         Package pack;
