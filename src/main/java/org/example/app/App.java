@@ -87,9 +87,19 @@ public class App implements ServerApp {
 
     }
 
-    public Response handleRequest(Request request) {
+    public Response handleRequest(Request request) throws SQLException {
         System.out.println("Request handled by Thread: " + currentThread().getName());
+        Response response = new Response(HttpStatus.INTERNAL_SERVER_ERROR, ContentType.JSON, "Server failed.");
 
+        try {
+            response = route(request);
+        } catch (Exception e) {
+        }
+
+        return response;
+    }
+
+    private Response route(Request request) {
         User authenticatedUser = sessionController.getAuthenticatedUser(request.getToken());
         boolean isAuthenticated = authenticatedUser != null;
 
