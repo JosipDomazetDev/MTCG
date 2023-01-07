@@ -2,19 +2,25 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.example.app.controllers.*;
 import org.example.app.models.*;
 import org.example.app.models.Package;
+import org.example.app.repositories.BattleRepository;
 import org.example.app.repositories.CardRepository;
 import org.example.app.repositories.UserRepository;
+import org.example.app.services.BattleService;
 import org.example.app.services.CardService;
 import org.example.app.services.TradingService;
 import org.example.app.services.UserService;
 import org.example.server.Response;
 import org.junit.jupiter.api.*;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockStatic;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -23,9 +29,12 @@ public class ControllerTest {
     User adminUser;
     UserRepository userRepositorySpy;
     CardRepository cardRepositorySpy;
+    BattleRepository battleRepositorySpy;
+
     CardService cardService = new CardService();
     TradingService tradingService = new TradingService();
     UserService userService = new UserService();
+    BattleService battleService = new BattleService();
 
     public ControllerTest() {
     }
@@ -44,6 +53,10 @@ public class ControllerTest {
         Mockito.doNothing().when(cardRepositorySpy).update(Mockito.any(), Mockito.any());
         Mockito.doNothing().when(cardRepositorySpy).updateDeck(Mockito.any());
 
+
+        battleRepositorySpy
+                = Mockito.spy(Mockito.mock(BattleRepository.class));
+        Mockito.doNothing().when(battleRepositorySpy).insert(Mockito.any());
     }
 
     @Test
@@ -120,9 +133,17 @@ public class ControllerTest {
         assertEquals(authenticatedUser.getCoins(), 0);
         assertEquals(403, packageController.buyPackage(authenticatedUser).getStatusCode());
 
+
         Package aPackage = cardService.getPackages().get(0);
         assertEquals(authenticatedUser, aPackage.getUser());
         assertEquals(5, aPackage.getCards().size());
+
+
+        // Buy for Admin
+        assertEquals(200, packageController.buyPackage(adminUser).getStatusCode());
+        assertEquals(200, packageController.buyPackage(adminUser).getStatusCode());
+        // No cards
+        assertEquals(404, packageController.buyPackage(adminUser).getStatusCode());
     }
 
     @Test
@@ -164,6 +185,9 @@ public class ControllerTest {
         assertEquals(authenticatedUser, card.getOwner());
         assertTrue(card.isDragon());
         assertFalse(card.isGoblin());
+
+        String dAdmin = "[\"d7d0cb94-2cbf-4f97-8ccf-9933dc5354b8\", \"44c82fbc-ef6d-44ab-8c7a-9fb19a0e7c6e\", \"2c98cd06-518b-464c-b911-8d787216cddd\", \"951e886a-0fbf-425d-8df5-af2ee4830d85\"]";
+        assertEquals(200, cardController.putCardsIntoDeck(dAdmin, adminUser).getStatusCode());
     }
 
 
@@ -184,4 +208,62 @@ public class ControllerTest {
         assertEquals(0, kienStat.getDraws());
         assertEquals(0, kienStat.getDefeats());
     }
+
+    void executeWithFixedSeed(RunnableWithException action) throws NoSuchAlgorithmException, JsonProcessingException, InterruptedException {
+        Random random = new Random();
+        random.setSeed(1);
+        System.out.println(random.nextInt(10));
+        try (MockedStatic<Battle> mocked = mockStatic(Battle.class)) {
+            mocked.when(Battle::getRand).thenReturn(random);
+            action.run();
+        }
+    }
+
+    @Test
+    @Order(5)
+    void testBattleController() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        BattleController battleController = new BattleController(battleService, battleRepositorySpy);
+        // Empty deck
+        assertEquals(404, battleController.createOrStartBattle(new User("test", "test")).getStatusCode());
+
+        executeWithFixedSeed(() -> {
+            performBattle(battleController);
+            assertEquals(95, adminUser.getStat().getElo());
+            assertEquals(0, adminUser.getStat().getWins());
+            assertEquals(0,adminUser.getStat().getDraws());
+            assertEquals(1, adminUser.getStat().getDefeats());
+
+            performBattle(battleController);
+            performBattle(battleController);
+
+            assertEquals(85, adminUser.getStat().getElo());
+            assertEquals(0, adminUser.getStat().getWins());
+            assertEquals(0,adminUser.getStat().getDraws());
+            assertEquals(3, adminUser.getStat().getDefeats());
+
+            assertEquals(109, authenticatedUser.getStat().getElo());
+            assertEquals(3, authenticatedUser.getStat().getWins());
+            assertEquals(0,authenticatedUser.getStat().getDraws());
+            assertEquals(0, authenticatedUser.getStat().getDefeats());
+        });
+
+    }
+
+    private void performBattle(BattleController battleController) throws InterruptedException {
+        Thread thread = new Thread(() -> {
+            try {
+                battleController.createOrStartBattle(authenticatedUser);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        thread.start();
+        Thread.sleep(100);
+
+        assertEquals(200, battleController.createOrStartBattle(adminUser).getStatusCode());
+    }
+}
+
+interface RunnableWithException {
+    void run() throws InputMismatchException, JsonProcessingException, NoSuchAlgorithmException, InterruptedException;
 }

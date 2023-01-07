@@ -189,7 +189,7 @@ public class Battle {
 
 
         int i = 0;
-        Random rand = new Random();
+        Random rand = getRand();
         while (!deck1.isEmpty() && !deck2.isEmpty() && i < 100) {
             // Draw a random card
             int index1 = rand.nextInt(deck1.size());
@@ -253,5 +253,9 @@ public class Battle {
         battleLog.append("\n=====================================\n");
 
 
+    }
+
+    public static Random getRand() {
+        return new Random();
     }
 }

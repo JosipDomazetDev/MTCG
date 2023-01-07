@@ -29,6 +29,15 @@ public class BattleController extends Controller {
 
     public Response createOrStartBattle(User authenticatedUser) throws InterruptedException {
         Battle battle;
+
+        if(authenticatedUser.getDeck().getCards().isEmpty()){
+            return new Response(
+                    HttpStatus.NOT_FOUND,
+                    ContentType.JSON,
+                    "{ \"error\": \"You cannot with an empty deck!\"}"
+            );
+        }
+
         try {
             battle = battleService.createOrStartBattle(authenticatedUser);
         } catch (ConflictException e) {
