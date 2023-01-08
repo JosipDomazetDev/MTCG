@@ -1,0 +1,10 @@
+@startuml
+autonumber
+    Controller -> Controller: receive request
+    Controller -> Service: call Service to handle logic
+    Service -> Service: perform logic
+    Service -> Controller: return data that needs to be persisted
+    Controller -> Repository: call Repository to persist data
+    Repository -> DB: execute SQL statements
+    Controller -> Controller: return completed request
+@enduml

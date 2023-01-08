@@ -1,16 +1,55 @@
-Describes design
+# Setup
 
-Describes lessons learned
+```bash
+# Start the container
+docker-compose up -d
 
-Describes unit testing decisions
+# Create the db mtcg
+docker exec <CONTAINER-ID> createdb -U josip mtcg
 
+# Run the init.sql script to create the tables (or restore the dump)
+docker exec -i <CONTAINER-ID> psql -U josip -d mtcg < init.sql
 
-Contains tracked time
+# To create a dump
+docker exec <CONTAINER-ID> pg_dump -U josip mtcg > dump.sql
+```
 
-Contains link to GIT
+# Design
+
+The app is a multithreaded REST server that makes use of a service pattern. The business logic is contained within the
+service layer. When a new request comes in the respective controller will make a call to the respective service.
+This architecture enabled me to easily write unit tests.
+
+As for persisting the data I used a postgres DB that runs in a docker container. Repositories take care of storing the
+actual data.
+After the service handled the action the user requested the controller makes a call to the respective repository.
+Repositories simply take the data of services as is and insert them (with prepared statements). I did not
+want to couple the database and the actual business logic hence why I chose this approach. The data from the database is
+loaded into the business layer once when the server is started.
+
+![The app architecture.](docs/seq.png "The app architecture.")
+
+![The schema for persisting the data.](docs/db.png "The schema for persisting the data.")
+
+# Describes lessons learned
+
+Synchronizing the access to the data and making the SQL transactions atomic were a nice insight.
+Moreover, I created my own ConnectionPool to not have lock the same database connection all the time.
+The separate threads can simply call `connectionPool.getConnection()` to obtain a lock on a connection from the pool.
+
+# Describes unit testing decisions
+
+Since all the logic is contained within the services that are called by the controllers I created test cases for each
+controller. The tests have a code coverage of roughly 70% for the relevant business logic.
+I used Mockito to mock the repositories to ensure they will not accidentally interact with my database.
+I also used Mockito to mock a `java.util.Random` object with a fixed seed to ensure the battle logic is tested in a
+deterministic manner.
+
+# Time & Git Link
+
+I spent roughly 80 hours on [this project](https://github.com/JosipDomazetDev/MTCG).
 
 # Unique feature
-
 
 | Monster | Crit Chance |
 |---------|-------------|
@@ -43,7 +82,42 @@ The battle log reflects whether a dodge occurred.
 
 > admin's "WaterGoblin" [15] DRAWS against kienboec's "Ork" [55] by narrowly escaping the attack
 
+## Bonus Features
 
-docker exec cb0e090df0ca createdb -U josip mtcg
+### ConnectionPool
 
-docker exec cb0e090df0ca createdb -U josip mtcgtest
+The `connectionPool` can execute statements in an atomic manner and provides an easy-to-use API, e.g.:
+
+```java
+getConnectionPool().executeAtomicTransaction((connection)->{
+        try(
+        PreparedStatement psUser=createInsertUserStatement(user,connection);
+        PreparedStatement psStat=createInsertStatStatement(user,connection)
+        ){
+        psUser.execute();
+        psStat.execute();
+        }catch(SQLException e){
+        e.printStackTrace();
+        }
+        });
+```
+
+The SQL statements `psUser` and `psStat` will either be both executed or neither of them.
+
+### Win/Loose Ration & Additional Routes
+
+The user can look at this win rate.
+
+```json
+{
+  "elo": 100,
+  "wins": 1,
+  "draws": 1,
+  "name": "Kienboeck",
+  "losses": 0,
+  "winRate": "50%"
+}
+```
+
+Furthermore, the user can use the path `GET /cards/{card-id}` to look at the details of just one card. And can look at
+the trades that belong to him with `GET /tradings?belongs=me`.

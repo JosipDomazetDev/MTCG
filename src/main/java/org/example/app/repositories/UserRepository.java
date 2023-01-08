@@ -23,7 +23,7 @@ public class UserRepository implements Repository {
     }
 
 
-    private PreparedStatement createInsertStatement(User user, Connection connection) throws SQLException {
+    private PreparedStatement createInsertUserStatement(User user, Connection connection) throws SQLException {
         String sql = "INSERT INTO \"user\"(id, username, passwordHash, coins, name, bio, image)\n" +
                 "VALUES(?, ?, ?, ?, ?, ?, ?);";
         PreparedStatement ps = connection.prepareStatement(sql);
@@ -46,13 +46,14 @@ public class UserRepository implements Repository {
     }
 
 
+
     public void insert(User user) {
         getConnectionPool().executeAtomicTransaction((connection) -> {
             try (
-                    PreparedStatement ps = createInsertStatement(user, connection);
+                    PreparedStatement psUser = createInsertUserStatement(user, connection);
                     PreparedStatement psStat = createInsertStatStatement(user, connection)
             ) {
-                ps.execute();
+                psUser.execute();
                 psStat.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
