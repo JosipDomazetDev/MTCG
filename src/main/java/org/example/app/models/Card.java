@@ -157,6 +157,38 @@ public class Card {
         return elementType == ElementType.NORMAL;
     }
 
+    @JsonIgnore
+    public double getCritChance() {
+        if (cardType != CardType.MONSTER) return 0;
+
+        if (isDragon()) {
+            return 0.01;
+        } else if (isGoblin()) {
+            return 0.4;
+        } else if (isKnight()) {
+            return 0.2;
+        } else if (isKraken()) {
+            return 0.1;
+        } else {
+            return 0.05;
+        }
+    }
+
+    @JsonIgnore
+    public double getDodgeChance() {
+        if (cardType != CardType.MONSTER) return 0;
+
+        if (isDragon()) {
+            return 0.10;
+        } else if (isGoblin()) {
+            return 0.10;
+        } else if (isElf()) {
+            return 0.3;
+        } else {
+            return 0.05;
+        }
+    }
+
     public synchronized void swapWith(Card offeredCard) {
         User temp = getOwner();
         setOwner(offeredCard.getOwner());

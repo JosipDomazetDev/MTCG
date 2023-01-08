@@ -126,40 +126,89 @@ public class Battle {
         }
 
 
-        // Compare the modified damage to the two cards to determine the winner
         double newCard1Damage = card1.getDamage() * card1Modifier;
         double newCard2Damage = card2.getDamage() * card2Modifier;
+        boolean card1Crit = false;
+        boolean card2Crit = false;
 
+        boolean isPureMonsterBattle = card1.getCardType() == CardType.MONSTER && card2.getCardType() == CardType.MONSTER;
+        if (isPureMonsterBattle) {
+            if (occursWithLikelihood(card1.getCritChance())) {
+                newCard1Damage = newCard1Damage * 1.5;
+                card1Crit = true;
+            }
+            if (occursWithLikelihood(card2.getCritChance())) {
+                newCard2Damage = newCard2Damage * 1.5;
+                card2Crit = true;
+            }
+
+        }
+
+        // Compare the modified damage to the two cards to determine the winner
         if (newCard1Damage > newCard2Damage) {
-            battleLog.append(String.format("%s's \"%s\" [%.0f] WINS against %s's \"%s\" [%.0f]\n",
+            if (occursWithLikelihood(card2.getDodgeChance()) && isPureMonsterBattle) {
+                battleLog.append(String.format("%s's \"%s\" [%.0f%s] DRAWS against %s's \"%s\" [%.0f%s] by narrowly escaping the attack\n",
+                        getPlayer2().getUsername(),
+                        card2.getName(),
+                        newCard2Damage,
+                        card2Crit ? "!" : "",
+                        getPlayer1().getUsername(),
+                        card1.getName(),
+                        newCard1Damage,
+                        card1Crit ? "!" : ""
+                ));
+                return null;
+            }
+
+            battleLog.append(String.format("%s's \"%s\" [%.0f%s] WINS against %s's \"%s\" [%.0f%s]\n",
                     getPlayer1().getUsername(),
                     card1.getName(),
-                    card1.getDamage(),
+                    newCard1Damage,
+                    card1Crit ? "!" : "",
                     getPlayer2().getUsername(),
                     card2.getName(),
-                    card2.getDamage()
+                    newCard2Damage,
+                    card2Crit ? "!" : ""
             ));
 
             return card1;
         } else if (newCard2Damage > newCard1Damage) {
-            battleLog.append(String.format("%s's \"%s\" [%.0f] WINS against %s's \"%s\" [%.0f]\n",
+            if (occursWithLikelihood(card1.getDodgeChance()) && isPureMonsterBattle) {
+                battleLog.append(String.format("%s's \"%s\" [%.0f%s] DRAWS against %s's \"%s\" [%.0f%s] by narrowly escaping the attack\n",
+                        getPlayer1().getUsername(),
+                        card1.getName(),
+                        newCard1Damage,
+                        card1Crit ? "!" : "",
+                        getPlayer2().getUsername(),
+                        card2.getName(),
+                        newCard2Damage,
+                        card2Crit ? "!" : ""
+                ));
+                return null;
+            }
+
+            battleLog.append(String.format("%s's \"%s\" [%.0f%s] WINS against %s's \"%s\" [%.0f%s]\n",
                     getPlayer2().getUsername(),
                     card2.getName(),
-                    card2.getDamage(),
+                    newCard2Damage,
+                    card2Crit ? "!" : "",
                     getPlayer1().getUsername(),
                     card1.getName(),
-                    card1.getDamage()
+                    newCard1Damage,
+                    card1Crit ? "!" : ""
             ));
 
             return card2;
         } else {
-            battleLog.append(String.format("%s's \"%s\" [%.0f] DRAWS against %s's \"%s\" [%.0f]\n",
+            battleLog.append(String.format("%s's \"%s\" [%.0f%s] DRAWS against %s's \"%s\" [%.0f%s]\n",
                     getPlayer1().getUsername(),
                     card1.getName(),
-                    card1.getDamage(),
+                    newCard1Damage,
+                    card1Crit ? "!" : "",
                     getPlayer2().getUsername(),
                     card2.getName(),
-                    card2.getDamage()
+                    newCard2Damage,
+                    card2Crit ? "!" : ""
             ));
             // Draw
             return null;
@@ -255,7 +304,15 @@ public class Battle {
 
     }
 
+    private static Random random = new Random();
+
     public static Random getRand() {
-        return new Random();
+        return random;
     }
+
+    public boolean occursWithLikelihood(double likelihood) {
+        return getRand().nextDouble() <= likelihood;
+    }
+
+
 }
