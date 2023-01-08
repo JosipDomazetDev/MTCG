@@ -31,13 +31,13 @@ loaded into the business layer once when the server is started.
 
 ![The schema for persisting the data.](docs/db.png "The schema for persisting the data.")
 
-# Describes lessons learned
+# Lessons learned
 
 Synchronizing the access to the data and making the SQL transactions atomic were a nice insight.
 Moreover, I created my own ConnectionPool to not have to lock the same database connection all the time.
 The separate threads can simply call `connectionPool.getConnection()` to obtain a lock on a connection from the pool.
 
-# Describes unit testing decisions
+# Unit testing decisions
 
 Since all the logic is contained within the services that are called by the controllers I created test cases for each
 controller. The tests have a code coverage of roughly 70% of the relevant business logic.
