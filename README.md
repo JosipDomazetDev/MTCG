@@ -90,16 +90,16 @@ The `connectionPool` can execute statements in an atomic manner and provides an 
 
 ```java
 getConnectionPool().executeAtomicTransaction((connection)->{
-        try(
+    try(
         PreparedStatement psUser=createInsertUserStatement(user,connection);
         PreparedStatement psStat=createInsertStatStatement(user,connection)
-        ){
+    ){
         psUser.execute();
         psStat.execute();
-        }catch(SQLException e){
+    }catch(SQLException e){
         e.printStackTrace();
-        }
-        });
+    }
+});
 ```
 
 The SQL statements `psUser` and `psStat` will either be both executed or neither of them.
@@ -110,7 +110,7 @@ The user can look at this win rate.
 
 ```json
 {
-  "elo": 100,
+  "elo": 103,
   "wins": 1,
   "draws": 1,
   "name": "Kienboeck",
@@ -119,5 +119,5 @@ The user can look at this win rate.
 }
 ```
 
-Furthermore, the user can use the path `GET /cards/{card-id}` to look at the details of just one card. And can look at
+Furthermore, the user can use the path `GET /cards/{card-id}` to look at the details of just one card. He can also look at
 the trades that belong to him with `GET /tradings?belongs=me`.
