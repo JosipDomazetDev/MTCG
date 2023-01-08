@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.app.services.exceptions.NoMoneyException;
+import org.example.app.utils.PasswordUtils;
 
 import java.beans.ConstructorProperties;
 import java.security.NoSuchAlgorithmException;

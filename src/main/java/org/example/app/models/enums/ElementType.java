@@ -1,4 +1,4 @@
-package org.example.app.models;
+package org.example.app.models.enums;
 
 public enum ElementType {
     FIRE,

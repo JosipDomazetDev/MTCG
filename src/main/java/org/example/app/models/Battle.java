@@ -3,10 +3,12 @@ package org.example.app.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.app.models.enums.BattleOutcome;
+import org.example.app.models.enums.CardType;
 
 import java.util.*;
 
-import static org.example.app.models.BattleOutcome.*;
+import static org.example.app.models.enums.BattleOutcome.*;
 
 @Getter
 @Setter

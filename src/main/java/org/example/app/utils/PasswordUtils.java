@@ -1,4 +1,4 @@
-package org.example.app.models;
+package org.example.app.utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

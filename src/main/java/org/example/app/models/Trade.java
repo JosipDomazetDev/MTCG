@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.app.models.enums.CardType;
 
 import java.beans.ConstructorProperties;
 import java.util.List;
