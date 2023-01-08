@@ -56,7 +56,7 @@ public class ConnectionPool {
                     }
                 }
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
 
         } catch (InterruptedException e) {
@@ -104,7 +104,7 @@ public class ConnectionPool {
                 connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         releaseConnection(connection);
@@ -120,7 +120,7 @@ public class ConnectionPool {
             }
             action.run(connection);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         releaseConnection(connection);

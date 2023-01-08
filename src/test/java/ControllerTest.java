@@ -262,7 +262,7 @@ public class ControllerTest {
             try {
                 battleController.createOrStartBattle(kienboecUser);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         });
         thread.start();
