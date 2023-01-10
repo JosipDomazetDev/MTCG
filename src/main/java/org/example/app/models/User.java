@@ -14,15 +14,16 @@ import java.util.UUID;
 @Getter
 @Setter
 public class User {
+    @JsonIgnore
     private String id;
 
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String username;
 
-    @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     @JsonIgnore
     private String passwordHash;
 
+    @JsonIgnore
     private String token;
 
     private int coins;
@@ -36,6 +37,7 @@ public class User {
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
     private String image;
 
+    @JsonIgnore
     private boolean isAdmin = false;
 
     @JsonIgnore

@@ -1,4 +1,5 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.app.controllers.*;
 import org.example.app.models.*;
 import org.example.app.models.Package;
@@ -367,6 +368,26 @@ public class ControllerTest {
             assertEquals(card1, battle.battle(card1, card2));
         });
     }
+
+    @Test
+    @Order(5)
+    void testJSONFormats() throws JsonProcessingException, NoSuchAlgorithmException {
+        BattleController battleController = new BattleController(battleService, battleRepositorySpy);
+        ObjectMapper objectMapper = battleController.getObjectMapper();
+
+        String cardJson = "{\"id\":\"bla\",\"name\":\"Dragon\",\"damage\":1.0}";
+        assertEquals(cardJson, objectMapper.writeValueAsString(new Card("bla", "Dragon", 1)));
+
+        String userJson = "{\"username\":\"kienboec\",\"coins\":0,\"name\":\"Kienboeck\",\"bio\":\"me playin...\",\"image\":\":-)\"}";
+        assertEquals(userJson, objectMapper.writeValueAsString(kienboecUser));
+
+        String tradeJson = "{\"id\":\"bla\",\"cardToTrade\":\"cardid\",\"type\":\"Monster\",\"minimumDamage\":70.0}";
+        assertEquals(tradeJson, objectMapper.writeValueAsString(new Trade("bla", "cardid", "monster", 70)));
+
+        String statJson = "{\"elo\":100,\"wins\":0,\"draws\":0,\"name\":null,\"losses\":0,\"winRate\":\"0%\"}";
+        assertEquals(statJson, objectMapper.writeValueAsString(new Stat(new User("bla", "bla"))));
+    }
+
 
     @Test
     @Order(5)
