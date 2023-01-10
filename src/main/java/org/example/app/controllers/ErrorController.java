@@ -6,7 +6,7 @@ import org.example.server.Request;
 import org.example.server.Response;
 
 public class ErrorController  extends Controller{
-    public  static Response sendUnauthorized(Request request) {
+    public  static Response sendUnauthorized() {
         return new Response(
                 HttpStatus.UNAUTHORIZED,
                 ContentType.JSON,

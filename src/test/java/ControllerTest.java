@@ -4,10 +4,7 @@ import org.example.app.models.*;
 import org.example.app.models.Package;
 import org.example.app.models.enums.CardType;
 import org.example.app.models.enums.ElementType;
-import org.example.app.repositories.BattleRepository;
-import org.example.app.repositories.CardRepository;
-import org.example.app.repositories.TradeRepository;
-import org.example.app.repositories.UserRepository;
+import org.example.app.repositories.*;
 import org.example.app.services.BattleService;
 import org.example.app.services.CardService;
 import org.example.app.services.TradingService;
@@ -19,19 +16,26 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ControllerTest {
     User kienboecUser;
     User adminUser;
+
+    ConnectionPool mockConnectionPool = mock(ConnectionPool.class);
+    Connection mockConnection = mock(Connection.class);
+    PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
+    ResultSet mockResultSet = mock(ResultSet.class);
+
     UserRepository userRepositorySpy;
     CardRepository cardRepositorySpy;
     BattleRepository battleRepositorySpy;
@@ -42,33 +46,41 @@ public class ControllerTest {
     UserService userService = new UserService();
     BattleService battleService = new BattleService();
 
+
     public ControllerTest() {
     }
 
     @BeforeAll
     void setupController() {
         userRepositorySpy
-                = Mockito.spy(Mockito.mock(UserRepository.class));
+                = Mockito.spy(mock(UserRepository.class));
         Mockito.doNothing().when(userRepositorySpy).insert(Mockito.any());
         Mockito.doNothing().when(userRepositorySpy).update(Mockito.any());
 
 
         cardRepositorySpy
-                = Mockito.spy(Mockito.mock(CardRepository.class));
+                = Mockito.spy(mock(CardRepository.class));
         Mockito.doNothing().when(cardRepositorySpy).insert(Mockito.any());
         Mockito.doNothing().when(cardRepositorySpy).update(Mockito.any(), Mockito.any());
         Mockito.doNothing().when(cardRepositorySpy).updateDeck(Mockito.any());
 
 
         battleRepositorySpy
-                = Mockito.spy(Mockito.mock(BattleRepository.class));
+                = Mockito.spy(mock(BattleRepository.class));
         Mockito.doNothing().when(battleRepositorySpy).insert(Mockito.any());
 
         tradeRepositorySpy
-                = Mockito.spy(Mockito.mock(TradeRepository.class));
+                = Mockito.spy(mock(TradeRepository.class));
         Mockito.doNothing().when(tradeRepositorySpy).delete(Mockito.any());
         Mockito.doNothing().when(tradeRepositorySpy).performTrade(Mockito.any());
         Mockito.doNothing().when(tradeRepositorySpy).insert(Mockito.any());
+
+        // Mock executeQuery to pass mock connection
+        doAnswer(invocation -> {
+            RunnableConnection runnable = invocation.getArgument(0);
+            runnable.run(mockConnection);
+            return null;
+        }).when(mockConnectionPool).executeQuery(any(RunnableConnection.class));
     }
 
     @Test
@@ -260,6 +272,13 @@ public class ControllerTest {
 
     }
 
+    @Test
+    @Order(5)
+    void tesErrorController() {
+        assertEquals(401, ErrorController.sendUnauthorized().getStatusCode());
+    }
+
+
     private void performBattle(BattleController battleController) throws InterruptedException {
         Thread thread = new Thread(() -> {
             try {
@@ -331,7 +350,35 @@ public class ControllerTest {
         Card oldCardAdmin = cardService.getCardsFromUser(adminUser).stream().filter(card -> Objects.equals(card.getId(), dragonIdOwnedByAdminOriginally)).findFirst().orElse(null);
         assertNull(oldCardAdmin);
     }
+
+
+    @Test
+    @Order(7)
+    public void testLoadAllBattles() throws SQLException {
+        when(mockConnection.prepareStatement(Mockito.any())).thenReturn(mockPreparedStatement);
+        when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
+
+
+        User player1 = userService.getUsers().get(0);
+        User player2 = userService.getUsers().get(1);
+        when(mockResultSet.next()).thenReturn(true, false);
+        when(mockResultSet.getString(1)).thenReturn("52c3d3b1-b3d9-4d36-a305-91a1f9242971");
+        when(mockResultSet.getString(2)).thenReturn(player1.getId());
+        when(mockResultSet.getString(3)).thenReturn(player2.getId());
+        when(mockResultSet.getString(4)).thenReturn("bla");
+        when(mockResultSet.getString(5)).thenReturn("DRAW");
+
+        BattleRepository battleRepository = new BattleRepository(mockConnectionPool);
+        List<Battle> battles = battleRepository.loadAll(userService.getUsers());
+
+        assertEquals(1, battles.size());
+        Battle battle = battles.get(0);
+        assertEquals(player1, battle.getPlayer1());
+        assertEquals(player2, battle.getPlayer2());
+        assertEquals(battle.getBattleOutcome(), battle.getBattleOutcome());
+    }
 }
+
 
 interface RunnableWithException {
     void run() throws InputMismatchException, JsonProcessingException, NoSuchAlgorithmException, InterruptedException;

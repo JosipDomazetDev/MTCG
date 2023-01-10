@@ -92,7 +92,7 @@ public class App implements ServerApp {
             switch (request.getMethod()) {
                 case GET -> {
                     if (!isAuthenticated) {
-                        return ErrorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized();
                     }
 
                     String matchesUserPath = matchesRootPath("users", request);
@@ -135,7 +135,7 @@ public class App implements ServerApp {
                     }
 
                     if (!isAuthenticated) {
-                        return ErrorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized();
                     }
                     if (request.getPathname().equals("/packages")) {
                         return this.packageController.createPackage(request.getBody(), authenticatedUser);
@@ -159,7 +159,7 @@ public class App implements ServerApp {
                 }
                 case PUT -> {
                     if (!isAuthenticated) {
-                        return ErrorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized();
                     }
 
                     String matchesUserPath = matchesRootPath("users", request);
@@ -173,7 +173,7 @@ public class App implements ServerApp {
                 }
                 case DELETE -> {
                     if (!isAuthenticated) {
-                        return ErrorController.sendUnauthorized(request);
+                        return ErrorController.sendUnauthorized();
                     }
                     String matchesTradingsPath = matchesRootPath("tradings", request);
                     if (matchesTradingsPath != null) {
