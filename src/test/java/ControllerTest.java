@@ -1,8 +1,8 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.app.controllers.*;
-import org.example.app.models.*;
 import org.example.app.models.Package;
+import org.example.app.models.*;
 import org.example.app.models.enums.CardType;
 import org.example.app.models.enums.ElementType;
 import org.example.app.repositories.*;
@@ -21,7 +21,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,31 +48,31 @@ public class ControllerTest {
     UserService userService = new UserService();
     BattleService battleService = new BattleService();
 
+    UserController userController;
+    PackageController packageController;
+    CardController cardController;
+
 
     public ControllerTest() {
     }
 
     @BeforeAll
     void setupController() {
-        userRepositorySpy
-                = Mockito.spy(mock(UserRepository.class));
+        userRepositorySpy = Mockito.spy(mock(UserRepository.class));
         Mockito.doNothing().when(userRepositorySpy).insert(Mockito.any());
         Mockito.doNothing().when(userRepositorySpy).update(Mockito.any());
 
 
-        cardRepositorySpy
-                = Mockito.spy(mock(CardRepository.class));
+        cardRepositorySpy = Mockito.spy(mock(CardRepository.class));
         Mockito.doNothing().when(cardRepositorySpy).insert(Mockito.any());
         Mockito.doNothing().when(cardRepositorySpy).update(Mockito.any(), Mockito.any());
         Mockito.doNothing().when(cardRepositorySpy).updateDeck(Mockito.any());
 
 
-        battleRepositorySpy
-                = Mockito.spy(mock(BattleRepository.class));
+        battleRepositorySpy = Mockito.spy(mock(BattleRepository.class));
         Mockito.doNothing().when(battleRepositorySpy).insert(Mockito.any());
 
-        tradeRepositorySpy
-                = Mockito.spy(mock(TradeRepository.class));
+        tradeRepositorySpy = Mockito.spy(mock(TradeRepository.class));
         Mockito.doNothing().when(tradeRepositorySpy).delete(Mockito.any());
         Mockito.doNothing().when(tradeRepositorySpy).performTrade(Mockito.any());
         Mockito.doNothing().when(tradeRepositorySpy).insert(Mockito.any());
@@ -80,12 +83,17 @@ public class ControllerTest {
             runnable.run(mockConnection);
             return null;
         }).when(mockConnectionPool).executeQuery(any(RunnableConnection.class));
+
+
+        userController = new UserController(userService, userRepositorySpy);
+        packageController = new PackageController(cardService, cardRepositorySpy);
+        cardController = new CardController(cardService, tradingService, cardRepositorySpy);
     }
+
 
     @Test
     @Order(1)
-    void testUserAndSessionController() throws NoSuchAlgorithmException, JsonProcessingException {
-        UserController userController = new UserController(userService, userRepositorySpy);
+    void testUserAndSessionController() throws JsonProcessingException {
         SessionController sessionController = new SessionController(userService);
 
         Response create = userController.createUser("{\"Username\":\"kienboec\", \"Password\":\"daniel\"}");
@@ -106,25 +114,57 @@ public class ControllerTest {
 
         Response get = userController.getUser("kienboec", kienboecUser);
         assertEquals(200, get.getStatusCode());
-        User kienbocUser = userService.getUser("kienboec");
+        User kienboecUser1 = userService.getUser("kienboec");
 
-        assertEquals("kienboec", kienbocUser.getUsername());
-        assertEquals("Kienboeck", kienbocUser.getName());
-        assertEquals("me playin...", kienbocUser.getBio());
-        assertEquals(":-)", kienbocUser.getImage());
-        assertEquals(20, kienbocUser.getCoins());
-        assertEquals(PasswordUtils.hashPassword("daniel".toCharArray()), kienbocUser.getPasswordHash());
+        assertEquals("kienboec", kienboecUser1.getUsername());
+        assertEquals("Kienboeck", kienboecUser1.getName());
+        assertEquals("me playin...", kienboecUser1.getBio());
+        assertEquals(":-)", kienboecUser1.getImage());
+        assertEquals(20, kienboecUser1.getCoins());
+    }
 
+    @Test
+    @Order(2)
+    public void testPasswordHashing() throws NoSuchAlgorithmException {
+        User user = new User("test", "passwort");
+
+        assertEquals(PasswordUtils.hashPassword("passwort".toCharArray()), user.getPasswordHash());
+
+        assertNotEquals(PasswordUtils.hashPassword("Passwort".toCharArray()), user.getPasswordHash());
+        assertNotEquals(PasswordUtils.hashPassword("other".toCharArray()), user.getPasswordHash());
+    }
+
+    @Test
+    @Order(3)
+    public void testUserStatConstructor() throws NoSuchAlgorithmException {
+        User user = new User("test", "passwort");
+
+        Stat stat = new Stat(user);
+        assertEquals(100, stat.getElo());
+        assertEquals(user, stat.getUser());
+
+        stat = new Stat(user.getId(), 100, 0, 1, 1);
+        assertEquals(1, stat.getTotal());
+        assertNull(stat.getUser());
+
+        stat.assignUser(user);
+        assertEquals(user, stat.getUser());
+        assertNull(stat.getFkUserId());
+    }
+
+    @Test
+    @Order(4)
+    public void testAdminUser() throws JsonProcessingException {
         userController.createUser("{\"Username\":\"admin\",    \"Password\":\"istrator\"}");
         adminUser = userService.getUser("admin");
         assertFalse(kienboecUser.isAdmin());
         assertTrue(adminUser.isAdmin());
     }
 
+
     @Test
-    @Order(2)
+    @Order(5)
     void testPackageController() throws JsonProcessingException {
-        PackageController packageController = new PackageController(cardService, cardRepositorySpy);
 
         String p0 = "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
         String p1 = "[{\"Id\":\"644808c2-f87a-4600-b313-122b02322fd5\", \"Name\":\"WaterGoblin\", \"Damage\":  9.0}, {\"Id\":\"4a2757d6-b1c3-47ac-b9a3-91deab093531\", \"Name\":\"Dragon\", \"Damage\": 55.0}, {\"Id\":\"91a6471b-1426-43f6-ad65-6fc473e16f9f\", \"Name\":\"WaterSpell\", \"Damage\": 21.0}, {\"Id\":\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\", \"Name\":\"Ork\", \"Damage\": 55.0}, {\"Id\":\"f8043c23-1534-4487-b66b-238e0c3c39b5\", \"Name\":\"WaterSpell\",   \"Damage\": 23.0}]";
@@ -156,11 +196,14 @@ public class ControllerTest {
         assertEquals(kienboecUser.getCoins(), 0);
         assertEquals(403, packageController.buyPackage(kienboecUser).getStatusCode());
 
+    }
 
+    @Test
+    @Order(6)
+    public void testBuyPackagesForAdmin() throws JsonProcessingException {
         Package aPackage = cardService.getPackages().get(0);
         assertEquals(kienboecUser, aPackage.getUser());
         assertEquals(5, aPackage.getCards().size());
-
 
         // Buy for Admin
         assertEquals(200, packageController.buyPackage(adminUser).getStatusCode());
@@ -170,9 +213,8 @@ public class ControllerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(7)
     void testCardController() throws JsonProcessingException {
-        CardController cardController = new CardController(cardService, tradingService, cardRepositorySpy);
         assertEquals(200, cardController.getCards(kienboecUser).getStatusCode());
         // Should own 20 cards
         assertEquals(20, cardService.getCardsFromUser(kienboecUser).size());
@@ -208,14 +250,18 @@ public class ControllerTest {
         assertEquals(kienboecUser, card.getOwner());
         assertTrue(card.isDragon());
         assertFalse(card.isGoblin());
-
-        String dAdmin = "[\"d7d0cb94-2cbf-4f97-8ccf-9933dc5354b8\", \"44c82fbc-ef6d-44ab-8c7a-9fb19a0e7c6e\", \"2c98cd06-518b-464c-b911-8d787216cddd\", \"951e886a-0fbf-425d-8df5-af2ee4830d85\"]";
-        assertEquals(200, cardController.putCardsIntoDeck(dAdmin, adminUser).getStatusCode());
     }
 
+    @Test
+    @Order(8)
+    void testDeckAdminUser() throws JsonProcessingException {
+        String dAdmin = "[\"d7d0cb94-2cbf-4f97-8ccf-9933dc5354b8\", \"44c82fbc-ef6d-44ab-8c7a-9fb19a0e7c6e\", \"2c98cd06-518b-464c-b911-8d787216cddd\", \"951e886a-0fbf-425d-8df5-af2ee4830d85\"]";
+        assertEquals(200, cardController.putCardsIntoDeck(dAdmin, adminUser).getStatusCode());
+        assertEquals(4, adminUser.getDeck().getCards().size());
+    }
 
     @Test
-    @Order(4)
+    @Order(9)
     void testStatController() throws JsonProcessingException {
         StatController statController = new StatController(userService);
 
@@ -242,7 +288,159 @@ public class ControllerTest {
     }
 
     @Test
-    @Order(5)
+    @Order(10)
+    void testBattleLogicMonster() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "WaterGoblin", 10, 0, 0);
+            Card card2 = new Card("bla", "FireTroll", 15, 0, 0);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireTroll", 15, 0, 0);
+            card2 = new Card("bla", "WaterGoblin", 10, 0, 0);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireTroll", 15, 0, 0);
+            card2 = new Card("bla", "WaterGoblin", 10, 0, 0);
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(11)
+    void testBattleLogicSpell() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "FireSpell", 10);
+            Card card2 = new Card("bla", "WaterSpell", 20);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireSpell", 20);
+            card2 = new Card("bla", "WaterSpell", 5);
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireSpell", 90);
+            card2 = new Card("bla", "WaterSpell", 5);
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(12)
+    void testBattleLogicMixed() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "FireSpell", 10);
+            Card card2 = new Card("bla", "WaterGoblin", 10);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "WaterSpell", 10);
+            card2 = new Card("bla", "WaterGoblin", 10);
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "RegularSpell", 10);
+            card2 = new Card("bla", "WaterGoblin", 10);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "RegularSpell", 10);
+            card2 = new Card("bla", "Knight", 15);
+            assertEquals(card2, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(13)
+    void testBattleLogicCrit() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "Dragon", 10, 1, 0);
+            Card card2 = new Card("bla", "Knight", 15, 0, 0);
+
+            // Draw due to crit
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "Dragon", 15, 1, 0);
+            card2 = new Card("bla", "Knight", 15, 0, 0);
+
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+
+    @Test
+    @Order(14)
+    void testBattleLogicDodge() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "Dragon", 1, 0, 1);
+            Card card2 = new Card("bla", "Knight", 99, 0, 0);
+
+            // Draw due to dodge
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "Dragon", 1, 0, 1);
+            card2 = new Card("bla", "Knight", 99, 0, 1);
+
+            assertNull(battle.battle(card1, card2));
+        });
+    }
+
+
+    @Test
+    @Order(15)
+    void testBattleLogicSpecial() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "Dragon", 1);
+            Card card2 = new Card("bla", "WaterGoblin", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "Wizzard", 1);
+            card2 = new Card("bla", "Ork", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "WaterSpell", 1);
+            card2 = new Card("bla", "Knight", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "RegularSpell", 100);
+            card2 = new Card("bla", "Kraken", 1);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireElf", 1);
+            card2 = new Card("bla", "Dragon", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+    private void performBattle(BattleController battleController) throws InterruptedException {
+        Thread thread = new Thread(() -> {
+            try {
+                battleController.createOrStartBattle(kienboecUser);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+        Thread.sleep(100);
+
+        assertEquals(200, battleController.createOrStartBattle(adminUser).getStatusCode());
+    }
+
+    @Test
+    @Order(16)
     void testBattleController() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
         BattleController battleController = new BattleController(battleService, battleRepositorySpy);
         // Empty deck
@@ -272,145 +470,7 @@ public class ControllerTest {
     }
 
     @Test
-    @Order(5)
-    void testBattleLogicMonster() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
-        executeWithFixedSeed(() -> {
-            Battle battle = new Battle(kienboecUser);
-            battle.setPlayer2(adminUser);
-
-            Card card1 = new Card("bla", "WaterGoblin", 10,0,0);
-            Card card2 = new Card("bla", "FireTroll", 15,0,0);
-            assertEquals(card2, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "FireTroll", 15,0,0);
-            card2 = new Card("bla", "WaterGoblin", 10,0,0);
-            assertEquals(card1, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "FireTroll", 15,0,0);
-            card2 = new Card("bla", "WaterGoblin", 10,0,0);
-            assertEquals(card1, battle.battle(card1, card2));
-        });
-    }
-
-    @Test
-    @Order(5)
-    void testBattleLogicSpell() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
-        executeWithFixedSeed(() -> {
-            Battle battle = new Battle(kienboecUser);
-            battle.setPlayer2(adminUser);
-
-            Card card1 = new Card("bla", "FireSpell", 10);
-            Card card2 = new Card("bla", "WaterSpell", 20);
-            assertEquals(card2, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "FireSpell", 20);
-            card2 = new Card("bla", "WaterSpell", 5);
-            assertNull(battle.battle(card1, card2));
-
-            card1 = new Card("bla", "FireSpell", 90);
-            card2 = new Card("bla", "WaterSpell", 5);
-            assertEquals(card1, battle.battle(card1, card2));
-        });
-    }
-
-    @Test
-    @Order(5)
-    void testBattleLogicMixed() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
-        executeWithFixedSeed(() -> {
-            Battle battle = new Battle(kienboecUser);
-            battle.setPlayer2(adminUser);
-
-            Card card1 = new Card("bla", "FireSpell", 10);
-            Card card2 = new Card("bla", "WaterGoblin", 10);
-            assertEquals(card2, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "WaterSpell", 10);
-            card2 = new Card("bla", "WaterGoblin", 10);
-            assertNull(battle.battle(card1, card2));
-
-            card1 = new Card("bla", "RegularSpell", 10);
-            card2 = new Card("bla", "WaterGoblin", 10);
-            assertEquals(card1, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "RegularSpell", 10);
-            card2 = new Card("bla", "Knight", 15);
-            assertEquals(card2, battle.battle(card1, card2));
-        });
-    }
-
-    @Test
-    @Order(5)
-    void testBattleLogicCrit() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
-        executeWithFixedSeed(() -> {
-            Battle battle = new Battle(kienboecUser);
-            battle.setPlayer2(adminUser);
-
-            Card card1 = new Card("bla", "Dragon", 10, 1, 0);
-            Card card2 = new Card("bla", "Knight", 15, 0,0);
-
-            // Draw due to crit
-            assertNull(battle.battle(card1, card2));
-
-            card1 = new Card("bla", "Dragon", 15, 1, 0);
-            card2 = new Card("bla", "Knight", 15, 0,0);
-
-            assertEquals(card1, battle.battle(card1, card2));
-        });
-    }
-
-
-    @Test
-    @Order(5)
-    void testBattleLogicDodge() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
-        executeWithFixedSeed(() -> {
-            Battle battle = new Battle(kienboecUser);
-            battle.setPlayer2(adminUser);
-
-            Card card1 = new Card("bla", "Dragon", 1, 0, 1);
-            Card card2 = new Card("bla", "Knight", 99, 0,0);
-
-            // Draw due to dodge
-            assertNull(battle.battle(card1, card2));
-
-            card1 = new Card("bla", "Dragon", 1, 0, 1);
-            card2 = new Card("bla", "Knight", 99, 0,1);
-
-            assertNull(battle.battle(card1, card2));
-        });
-    }
-
-
-    @Test
-    @Order(5)
-    void testBattleLogicSpecial() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
-        executeWithFixedSeed(() -> {
-            Battle battle = new Battle(kienboecUser);
-            battle.setPlayer2(adminUser);
-
-            Card card1 = new Card("bla", "Dragon", 1);
-            Card card2 = new Card("bla", "WaterGoblin", 100);
-            assertEquals(card1, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "Wizzard", 1);
-            card2 = new Card("bla", "Ork", 100);
-            assertEquals(card1, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "WaterSpell", 1);
-            card2 = new Card("bla", "Knight", 100);
-            assertEquals(card1, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "RegularSpell", 100);
-            card2 = new Card("bla", "Kraken", 1);
-            assertEquals(card2, battle.battle(card1, card2));
-
-            card1 = new Card("bla", "FireElf", 1);
-            card2 = new Card("bla", "Dragon", 100);
-            assertEquals(card1, battle.battle(card1, card2));
-        });
-    }
-
-    @Test
-    @Order(5)
+    @Order(17)
     void testJSONFormats() throws JsonProcessingException, NoSuchAlgorithmException {
         BattleController battleController = new BattleController(battleService, battleRepositorySpy);
         ObjectMapper objectMapper = battleController.getObjectMapper();
@@ -430,29 +490,13 @@ public class ControllerTest {
 
 
     @Test
-    @Order(5)
-    void tesErrorController() {
+    @Order(18)
+    void testErrorController() {
         assertEquals(401, ErrorController.sendUnauthorized().getStatusCode());
     }
 
-
-    private void performBattle(BattleController battleController) throws InterruptedException {
-        Thread thread = new Thread(() -> {
-            try {
-                battleController.createOrStartBattle(kienboecUser);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        thread.start();
-        Thread.sleep(100);
-
-        assertEquals(200, battleController.createOrStartBattle(adminUser).getStatusCode());
-    }
-
-
     @Test
-    @Order(6)
+    @Order(19)
     void testTradeController() throws JsonProcessingException {
         TradingController tradingController = new TradingController(tradingService, cardService, tradeRepositorySpy);
 
@@ -510,7 +554,7 @@ public class ControllerTest {
 
 
     @Test
-    @Order(7)
+    @Order(20)
     public void testLoadAllBattles() throws SQLException {
         PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
         ResultSet mockResultSet = mock(ResultSet.class);
@@ -538,7 +582,7 @@ public class ControllerTest {
     }
 
     @Test
-    @Order(8)
+    @Order(21)
     public void testLoadAllCard() throws SQLException {
         CardRepository cardRepository = new CardRepository(mockConnectionPool);
 
@@ -599,7 +643,6 @@ public class ControllerTest {
         assertTrue(packageFromDb.getCards().stream().anyMatch(card -> Objects.equals(card.getId(), packageCard.getId())));
         // Check correct card is in deck
         assertTrue(packageFromDb.getUser().getDeck().getCards().stream().anyMatch(card -> Objects.equals(card.getId(), deckCard.getId())));
-
     }
 }
 

@@ -40,7 +40,7 @@ The separate threads can simply call `connectionPool.getConnection()` to obtain 
 # Unit testing decisions
 
 Since all the logic is contained within the services that are called by the controllers I created test cases for each
-controller. The tests have a code coverage of roughly 70% of the relevant business logic.
+controller. The tests have a code coverage of roughly 80% of the relevant business logic.
 I used Mockito to mock the repositories to ensure they will not accidentally interact with my database.
 I also used Mockito to mock a `java.util.Random` object with a fixed seed to ensure the battle logic is tested in a
 deterministic manner.
