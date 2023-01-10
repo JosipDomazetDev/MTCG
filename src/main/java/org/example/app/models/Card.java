@@ -27,6 +27,10 @@ public class Card {
     private CardType cardType;
     @JsonIgnore
     private User owner;
+    @JsonIgnore
+    private double critChance;
+    @JsonIgnore
+    private double dodgeChance;
 
     public static final String SPELL = "spell";
     public static final String WATER = "water";
@@ -37,6 +41,8 @@ public class Card {
         this.id = id;
         this.name = name;
         this.damage = damage;
+        this.critChance = calculateCritChance();
+        this.dodgeChance = calculateDodgeChance();
 
         String lowerName = name.toLowerCase();
 
@@ -55,10 +61,19 @@ public class Card {
         }
     }
 
+    public Card(String id, String name, double damage, double critChance, double dodgeChance) {
+       this(id, name, damage);
+       this.critChance = critChance;
+       this.dodgeChance = dodgeChance;
+    }
+
+
     public Card(String id, String name, double damage, String elementType, String cardType, User owner, Package pack) {
         this.id = id;
         this.name = name;
         this.damage = damage;
+        this.critChance = calculateCritChance();
+        this.dodgeChance = calculateDodgeChance();
 
         if (cardType.contains(CardType.SPELL.toString())) {
             this.cardType = CardType.SPELL;
@@ -160,7 +175,7 @@ public class Card {
     }
 
     @JsonIgnore
-    public double getCritChance() {
+    public double calculateCritChance() {
         if (cardType != CardType.MONSTER) return 0;
 
         if (isDragon()) {
@@ -177,7 +192,7 @@ public class Card {
     }
 
     @JsonIgnore
-    public double getDodgeChance() {
+    public double calculateDodgeChance() {
         if (cardType != CardType.MONSTER) return 0;
 
         if (isDragon()) {

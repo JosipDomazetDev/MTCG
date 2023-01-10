@@ -15,7 +15,6 @@ import org.example.server.Response;
 import org.junit.jupiter.api.*;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.postgresql.shaded.com.ongres.scram.common.bouncycastle.pbkdf2.Pack;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -279,17 +278,16 @@ public class ControllerTest {
             Battle battle = new Battle(kienboecUser);
             battle.setPlayer2(adminUser);
 
-            Card card1 = new Card("bla", "WaterGoblin", 10);
-            Card card2 = new Card("bla", "FireTroll", 15);
+            Card card1 = new Card("bla", "WaterGoblin", 10,0,0);
+            Card card2 = new Card("bla", "FireTroll", 15,0,0);
             assertEquals(card2, battle.battle(card1, card2));
 
-            card1 = new Card("bla", "FireTroll", 15);
-            card2 = new Card("bla", "WaterGoblin", 10);
-            // Dodge happens here (special feature)
-            assertNull(battle.battle(card1, card2));
+            card1 = new Card("bla", "FireTroll", 15,0,0);
+            card2 = new Card("bla", "WaterGoblin", 10,0,0);
+            assertEquals(card1, battle.battle(card1, card2));
 
-            card1 = new Card("bla", "FireTroll", 15);
-            card2 = new Card("bla", "WaterGoblin", 10);
+            card1 = new Card("bla", "FireTroll", 15,0,0);
+            card2 = new Card("bla", "WaterGoblin", 10,0,0);
             assertEquals(card1, battle.battle(card1, card2));
         });
     }
@@ -339,6 +337,48 @@ public class ControllerTest {
             assertEquals(card2, battle.battle(card1, card2));
         });
     }
+
+    @Test
+    @Order(5)
+    void testBattleLogicCrit() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "Dragon", 10, 1, 0);
+            Card card2 = new Card("bla", "Knight", 15, 0,0);
+
+            // Draw due to crit
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "Dragon", 15, 1, 0);
+            card2 = new Card("bla", "Knight", 15, 0,0);
+
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+
+    @Test
+    @Order(5)
+    void testBattleLogicDodge() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "Dragon", 1, 0, 1);
+            Card card2 = new Card("bla", "Knight", 99, 0,0);
+
+            // Draw due to dodge
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "Dragon", 1, 0, 1);
+            card2 = new Card("bla", "Knight", 99, 0,1);
+
+            assertNull(battle.battle(card1, card2));
+        });
+    }
+
 
     @Test
     @Order(5)
