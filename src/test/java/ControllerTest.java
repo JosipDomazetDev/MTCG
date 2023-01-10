@@ -14,6 +14,7 @@ import org.example.server.Response;
 import org.junit.jupiter.api.*;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.postgresql.shaded.com.ongres.scram.common.bouncycastle.pbkdf2.Pack;
 
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -33,8 +34,6 @@ public class ControllerTest {
 
     ConnectionPool mockConnectionPool = mock(ConnectionPool.class);
     Connection mockConnection = mock(Connection.class);
-    PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
-    ResultSet mockResultSet = mock(ResultSet.class);
 
     UserRepository userRepositorySpy;
     CardRepository cardRepositorySpy;
@@ -355,6 +354,8 @@ public class ControllerTest {
     @Test
     @Order(7)
     public void testLoadAllBattles() throws SQLException {
+        PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
         when(mockConnection.prepareStatement(Mockito.any())).thenReturn(mockPreparedStatement);
         when(mockPreparedStatement.executeQuery()).thenReturn(mockResultSet);
 
@@ -376,6 +377,71 @@ public class ControllerTest {
         assertEquals(player1, battle.getPlayer1());
         assertEquals(player2, battle.getPlayer2());
         assertEquals(battle.getBattleOutcome(), battle.getBattleOutcome());
+    }
+
+    @Test
+    @Order(8)
+    public void testLoadAllCard() throws SQLException {
+        CardRepository cardRepository = new CardRepository(mockConnectionPool);
+
+        PreparedStatement mockPreparedStatementCard = mock(PreparedStatement.class);
+        ResultSet mockResultSetCard = mock(ResultSet.class);
+
+        PreparedStatement mockPreparedStatementPack = mock(PreparedStatement.class);
+        ResultSet mockResultSetPack = mock(ResultSet.class);
+
+        PreparedStatement mockPreparedStatementDeck = mock(PreparedStatement.class);
+        ResultSet mockResultSetDeck = mock(ResultSet.class);
+
+        when(cardRepository.createSelectCardStatement(mockConnection)).thenReturn(mockPreparedStatementCard);
+        when(mockPreparedStatementCard.executeQuery()).thenReturn(mockResultSetCard);
+
+        when(cardRepository.createSelectPackStatement(mockConnection)).thenReturn(mockPreparedStatementPack);
+        when(mockPreparedStatementPack.executeQuery()).thenReturn(mockResultSetPack);
+
+        when(cardRepository.createSelectDeckStatement(mockConnection)).thenReturn(mockPreparedStatementDeck);
+        when(mockPreparedStatementDeck.executeQuery()).thenReturn(mockResultSetDeck);
+
+
+        Package aPackage = cardService.getPackages().get(0);
+
+        when(mockResultSetPack.next()).thenReturn(true, false);
+        when(mockResultSetPack.getString(1)).thenReturn(aPackage.getId());
+        when(mockResultSetPack.getInt(2)).thenReturn(aPackage.getPrice());
+        when(mockResultSetPack.getString(3)).thenReturn(aPackage.getUser().getId());
+
+
+        Card packageCard = aPackage.getCards().get(0);
+
+        when(mockResultSetCard.next()).thenReturn(true, false);
+        when(mockResultSetCard.getString(1)).thenReturn(packageCard.getId());
+        when(mockResultSetCard.getString(2)).thenReturn(packageCard.getName());
+        when(mockResultSetCard.getDouble(3)).thenReturn(packageCard.getDamage());
+        when(mockResultSetCard.getString(4)).thenReturn("WATER");
+        when(mockResultSetCard.getString(5)).thenReturn("MONSTER");
+        when(mockResultSetCard.getString(6)).thenReturn(packageCard.getOwner().getId());
+        when(mockResultSetCard.getString(7)).thenReturn(packageCard.getPack().getId());
+
+
+        Card deckCard = kienboecUser.getDeck().getCards().get(0);
+
+        when(mockResultSetCard.next()).thenReturn(true, false);
+        when(mockResultSetDeck.getString(1)).thenReturn(kienboecUser.getId());
+        when(mockResultSetDeck.getString(2)).thenReturn(deckCard.getId());
+
+
+        Package packageFromDb = cardRepository.loadAll(userService.getUsers()).get(0);
+        // Check correct package owner
+        assertEquals("kienboec", packageFromDb.getUser().getUsername());
+        // Check correct card owner
+        assertEquals("kienboec", packageFromDb.getCards().get(0).getOwner().getUsername());
+        // Check correct card damage
+        assertEquals(packageCard.getDamage(), packageFromDb.getCards().get(0).getDamage());
+        // Check correct card is in package
+        assertTrue(packageFromDb.getCards().stream().anyMatch(card -> Objects.equals(card.getId(), packageCard.getId())));
+        // Check correct card is in deck
+        assertTrue(packageFromDb.getUser().getDeck().getCards().stream().anyMatch(card -> Objects.equals(card.getId(), deckCard.getId())));
+
     }
 }
 

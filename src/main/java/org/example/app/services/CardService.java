@@ -92,4 +92,8 @@ public class CardService {
             deckCards.addAll(cards);
         }
     }
+
+    public List<Card> getAllCards() {
+        return getPackages().stream().flatMap(aPackage -> aPackage.getCards().stream()).toList();
+    }
 }

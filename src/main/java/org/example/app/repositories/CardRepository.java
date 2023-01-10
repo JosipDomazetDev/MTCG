@@ -182,17 +182,17 @@ public class CardRepository implements Repository {
         });
     }
 
-    private PreparedStatement createSelectCardStatement(Connection connection) throws SQLException {
+    public PreparedStatement createSelectCardStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, name, damage, elementtype, cardtype, fk_ownerid, fk_packid FROM card;";
         return connection.prepareStatement(sql);
     }
 
-    private PreparedStatement createSelectPackStatement(Connection connection) throws SQLException {
+    public PreparedStatement createSelectPackStatement(Connection connection) throws SQLException {
         String sql = "SELECT id, price, fk_userid FROM package";
         return connection.prepareStatement(sql);
     }
 
-    private PreparedStatement createSelectDeckStatement(Connection connection) throws SQLException {
+    public PreparedStatement createSelectDeckStatement(Connection connection) throws SQLException {
         String sql = "SELECT fk_userid, fk_cardid  FROM deck";
         return connection.prepareStatement(sql);
     }
@@ -226,7 +226,7 @@ public class CardRepository implements Repository {
                 while (rsCards.next()) {
                     String id = rsCards.getString(1);
                     String name = rsCards.getString(2);
-                    double damage = rsCards.getInt(3);
+                    double damage = rsCards.getDouble(3);
                     String elementType = rsCards.getString(4);
                     String cardType = rsCards.getString(5);
                     String fkOwnerId = rsCards.getString(6);
@@ -248,6 +248,7 @@ public class CardRepository implements Repository {
                 for (Package pack : packs) {
                     pack.setCards(cards.stream().filter(card -> Objects.equals(card.getPack().getId(), pack.getId())).toList());
                 }
+
 
 
                 while (rsDecks.next()) {

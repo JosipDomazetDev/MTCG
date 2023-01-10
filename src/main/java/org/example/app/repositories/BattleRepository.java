@@ -26,7 +26,7 @@ public class BattleRepository implements Repository {
     }
 
 
-    private PreparedStatement createInsertBattleStatement(Battle battle, Connection connection) throws SQLException {
+    public PreparedStatement createInsertBattleStatement(Battle battle, Connection connection) throws SQLException {
         String sql = "INSERT INTO battle(id, fk_player1id, fk_player2id, battlelog, battleoutcome) VALUES " + "(?,?,?,?,?);";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, battle.getId());

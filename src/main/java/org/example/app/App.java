@@ -73,7 +73,8 @@ public class App implements ServerApp {
         cardController.loadAll(userService.getUsers());
         battleController.loadAll(userService.getUsers());
 
-        List<Card> cards = cardService.getPackages().stream().flatMap(aPackage -> aPackage.getCards().stream()).toList();
+
+        List<Card> cards = cardService.getAllCards();
         tradingController.loadAll(userService.getUsers(), cards);
 
     }
