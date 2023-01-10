@@ -273,6 +273,103 @@ public class ControllerTest {
 
     @Test
     @Order(5)
+    void testBattleLogicMonster() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "WaterGoblin", 10);
+            Card card2 = new Card("bla", "FireTroll", 15);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireTroll", 15);
+            card2 = new Card("bla", "WaterGoblin", 10);
+            // Dodge happens here (special feature)
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireTroll", 15);
+            card2 = new Card("bla", "WaterGoblin", 10);
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(5)
+    void testBattleLogicSpell() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "FireSpell", 10);
+            Card card2 = new Card("bla", "WaterSpell", 20);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireSpell", 20);
+            card2 = new Card("bla", "WaterSpell", 5);
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireSpell", 90);
+            card2 = new Card("bla", "WaterSpell", 5);
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(5)
+    void testBattleLogicMixed() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "FireSpell", 10);
+            Card card2 = new Card("bla", "WaterGoblin", 10);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "WaterSpell", 10);
+            card2 = new Card("bla", "WaterGoblin", 10);
+            assertNull(battle.battle(card1, card2));
+
+            card1 = new Card("bla", "RegularSpell", 10);
+            card2 = new Card("bla", "WaterGoblin", 10);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "RegularSpell", 10);
+            card2 = new Card("bla", "Knight", 15);
+            assertEquals(card2, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(5)
+    void testBattleLogicSpecial() throws JsonProcessingException, InterruptedException, NoSuchAlgorithmException {
+        executeWithFixedSeed(() -> {
+            Battle battle = new Battle(kienboecUser);
+            battle.setPlayer2(adminUser);
+
+            Card card1 = new Card("bla", "Dragon", 1);
+            Card card2 = new Card("bla", "WaterGoblin", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "Wizzard", 1);
+            card2 = new Card("bla", "Ork", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "WaterSpell", 1);
+            card2 = new Card("bla", "Knight", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "RegularSpell", 100);
+            card2 = new Card("bla", "Kraken", 1);
+            assertEquals(card2, battle.battle(card1, card2));
+
+            card1 = new Card("bla", "FireElf", 1);
+            card2 = new Card("bla", "Dragon", 100);
+            assertEquals(card1, battle.battle(card1, card2));
+        });
+    }
+
+    @Test
+    @Order(5)
     void tesErrorController() {
         assertEquals(401, ErrorController.sendUnauthorized().getStatusCode());
     }
