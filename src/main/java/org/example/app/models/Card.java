@@ -41,8 +41,6 @@ public class Card {
         this.id = id;
         this.name = name;
         this.damage = damage;
-        this.critChance = calculateCritChance();
-        this.dodgeChance = calculateDodgeChance();
 
         String lowerName = name.toLowerCase();
 
@@ -59,6 +57,9 @@ public class Card {
         } else {
             this.elementType = ElementType.NORMAL;
         }
+
+        this.critChance = calculateCritChance();
+        this.dodgeChance = calculateDodgeChance();
     }
 
     public Card(String id, String name, double damage, double critChance, double dodgeChance) {
@@ -72,8 +73,6 @@ public class Card {
         this.id = id;
         this.name = name;
         this.damage = damage;
-        this.critChance = calculateCritChance();
-        this.dodgeChance = calculateDodgeChance();
 
         if (cardType.contains(CardType.SPELL.toString())) {
             this.cardType = CardType.SPELL;
@@ -91,6 +90,8 @@ public class Card {
 
         this.owner = owner;
         this.pack = pack;
+        this.critChance = calculateCritChance();
+        this.dodgeChance = calculateDodgeChance();
     }
 
     @Override
