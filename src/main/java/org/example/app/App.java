@@ -15,6 +15,8 @@ import org.example.server.Response;
 import org.example.server.ServerApp;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +47,7 @@ public class App implements ServerApp {
     private TradingController tradingController;
 
     private static final ConnectionPool pool = new ConnectionPool();
+
     public App() {
         UserRepository userRepository = new UserRepository(pool);
         CardRepository cardRepository = new CardRepository(pool);
@@ -80,9 +83,19 @@ public class App implements ServerApp {
     }
 
     public Response handleRequest(Request request) throws SQLException {
-        System.out.println("Request handled by Thread: " + currentThread().getName());
+        Response route = route(request);
 
-        return route(request);
+        String format = String.format("%s: %d %s %s %s (%s)",
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                route.getStatusCode(),
+                request.getMethod(),
+                request.getPathname(),
+                request.getParams(),
+                currentThread().getName()
+        );
+        System.out.println(format);
+
+        return route;
     }
 
     private Response route(Request request) {
