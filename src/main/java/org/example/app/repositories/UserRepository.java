@@ -38,13 +38,13 @@ public class UserRepository implements Repository {
     }
 
     private PreparedStatement createInsertStatStatement(User user, Connection connection) throws SQLException {
-        String sql = "INSERT INTO stat(fk_userid) " +
-                "VALUES(?);";
+        String sql = "INSERT INTO stat(fk_userid, elo) " +
+                "VALUES(?, ?);";
         PreparedStatement ps = connection.prepareStatement(sql);
         ps.setString(1, user.getId());
+        ps.setInt(2, user.getStat().getElo());
         return ps;
     }
-
 
 
     public void insert(User user) {
