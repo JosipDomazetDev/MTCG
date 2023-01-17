@@ -274,21 +274,21 @@ public class Battle {
             setBattleOutcome(WIN_PLAYER_2);
 
             battleLog.append(String.format("\n%s [Elo: %d] WINS AGAINST %s [Elo: %d]",
-                    getPlayer1().getUsername(),
-                    getPlayer1().getStat().getElo(),
                     getPlayer2().getUsername(),
-                    getPlayer2().getStat().getElo()));
+                    getPlayer2().getStat().getElo(),
+                    getPlayer1().getUsername(),
+                    getPlayer1().getStat().getElo())
+            );
         } else if (deck2.isEmpty()) {
             player1.getStat().won();
             player2.getStat().lost();
             setBattleOutcome(WIN_PLAYER_1);
 
             battleLog.append(String.format("\n%s [Elo: %d] WINS AGAINST %s [Elo: %d]",
-                    getPlayer2().getUsername(),
-                    getPlayer2().getStat().getElo(),
                     getPlayer1().getUsername(),
-                    getPlayer1().getStat().getElo())
-            );
+                    getPlayer1().getStat().getElo(),
+                    getPlayer2().getUsername(),
+                    getPlayer2().getStat().getElo()));
         } else {
             player1.getStat().draw();
             player2.getStat().draw();
